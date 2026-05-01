@@ -1,0 +1,23 @@
+{
+  "name": "Nocturne — Survivors",
+  "short_name": "Nocturne",
+  "description": "Jeu de survie gothique isométrique",
+  "start_url": "./nocturne.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0a0a1a",
+  "theme_color": "#0a0a1a",
+  "icons": [
+    {
+      "src": "assets/Logo/icon-192.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "assets/Logo/icon-512.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
