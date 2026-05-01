@@ -1,6 +1,6 @@
 const CACHE = 'nocturne-v1';
 const FILES = [
-  './nocturne.html',
+  './index.html',
   './manifest.json',
   './assets/Logo/icon-192.jpg',
   './assets/Logo/icon-512.jpg'

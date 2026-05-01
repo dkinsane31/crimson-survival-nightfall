@@ -2,7 +2,7 @@
   "name": "Nocturne — Survivors",
   "short_name": "Nocturne",
   "description": "Jeu de survie gothique isométrique",
-  "start_url": "./nocturne.html",
+  "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#0a0a1a",
