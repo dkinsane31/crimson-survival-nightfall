@@ -564,11 +564,39 @@ const ASSET_MANIFEST = [
   { id:'boss_reine_north-west', path:'assets/sprites/bosses/reine/rotations/north-west.png' },
   { id:'boss_reine_south-east', path:'assets/sprites/bosses/reine/rotations/south-east.png' },
   { id:'boss_reine_south-west', path:'assets/sprites/bosses/reine/rotations/south-west.png' },
-  // Familiers
-  { id:'fam_goule',         path:'assets/sprites/familiars/goule.png' },
-  { id:'fam_chauvesouris',  path:'assets/sprites/familiars/chauvesouris.png' },
-  { id:'fam_golem',         path:'assets/sprites/familiars/golem.png' },
-  { id:'fam_corbeau',       path:'assets/sprites/familiars/corbeau.png' },
+  // Familiers directionnels
+  { id:'fam_goule_south',      path:'assets/sprites/familiars/goule/rotations/south.png' },
+  { id:'fam_goule_north',      path:'assets/sprites/familiars/goule/rotations/north.png' },
+  { id:'fam_goule_east',       path:'assets/sprites/familiars/goule/rotations/east.png' },
+  { id:'fam_goule_west',       path:'assets/sprites/familiars/goule/rotations/west.png' },
+  { id:'fam_goule_north-east', path:'assets/sprites/familiars/goule/rotations/north-east.png' },
+  { id:'fam_goule_north-west', path:'assets/sprites/familiars/goule/rotations/north-west.png' },
+  { id:'fam_goule_south-east', path:'assets/sprites/familiars/goule/rotations/south-east.png' },
+  { id:'fam_goule_south-west', path:'assets/sprites/familiars/goule/rotations/south-west.png' },
+  { id:'fam_chauvesouris_south',      path:'assets/sprites/familiars/chauvesouris/rotations/south.png' },
+  { id:'fam_chauvesouris_north',      path:'assets/sprites/familiars/chauvesouris/rotations/north.png' },
+  { id:'fam_chauvesouris_east',       path:'assets/sprites/familiars/chauvesouris/rotations/east.png' },
+  { id:'fam_chauvesouris_west',       path:'assets/sprites/familiars/chauvesouris/rotations/west.png' },
+  { id:'fam_chauvesouris_north-east', path:'assets/sprites/familiars/chauvesouris/rotations/north-east.png' },
+  { id:'fam_chauvesouris_north-west', path:'assets/sprites/familiars/chauvesouris/rotations/north-west.png' },
+  { id:'fam_chauvesouris_south-east', path:'assets/sprites/familiars/chauvesouris/rotations/south-east.png' },
+  { id:'fam_chauvesouris_south-west', path:'assets/sprites/familiars/chauvesouris/rotations/south-west.png' },
+  { id:'fam_golem_south',      path:'assets/sprites/familiars/golem/rotations/south.png' },
+  { id:'fam_golem_north',      path:'assets/sprites/familiars/golem/rotations/north.png' },
+  { id:'fam_golem_east',       path:'assets/sprites/familiars/golem/rotations/east.png' },
+  { id:'fam_golem_west',       path:'assets/sprites/familiars/golem/rotations/west.png' },
+  { id:'fam_golem_north-east', path:'assets/sprites/familiars/golem/rotations/north-east.png' },
+  { id:'fam_golem_north-west', path:'assets/sprites/familiars/golem/rotations/north-west.png' },
+  { id:'fam_golem_south-east', path:'assets/sprites/familiars/golem/rotations/south-east.png' },
+  { id:'fam_golem_south-west', path:'assets/sprites/familiars/golem/rotations/south-west.png' },
+  { id:'fam_corbeau_south',      path:'assets/sprites/familiars/corbeau/rotations/south.png' },
+  { id:'fam_corbeau_north',      path:'assets/sprites/familiars/corbeau/rotations/north.png' },
+  { id:'fam_corbeau_east',       path:'assets/sprites/familiars/corbeau/rotations/east.png' },
+  { id:'fam_corbeau_west',       path:'assets/sprites/familiars/corbeau/rotations/west.png' },
+  { id:'fam_corbeau_north-east', path:'assets/sprites/familiars/corbeau/rotations/north-east.png' },
+  { id:'fam_corbeau_north-west', path:'assets/sprites/familiars/corbeau/rotations/north-west.png' },
+  { id:'fam_corbeau_south-east', path:'assets/sprites/familiars/corbeau/rotations/south-east.png' },
+  { id:'fam_corbeau_south-west', path:'assets/sprites/familiars/corbeau/rotations/south-west.png' },
   // Tuiles (3 variantes par map pour alternance)
   { id:'tile_crypte_1',     path:'assets/sprites/tiles/crypte_1.png' },
   { id:'tile_crypte_2',     path:'assets/sprites/tiles/crypte_2.png' },
@@ -5179,7 +5207,8 @@ function drawFamiliarIso(f){
   ctx.rotate(anim.tilt);
   ctx.scale(anim.squashX, anim.squashY);
   const pngId = 'fam_' + f.kind;
-  if(!drawPNGSprite(pngId)){
+  const fDir = getCharDir(f.vx||0, f.vy||0);
+  if(!drawPNGSprite(pngId + '_' + fDir) && !drawPNGSprite(pngId)){
     ctx.scale(ISO.spriteScale, ISO.spriteScale);
     const fn = ISOSPR[f.kind] || ISOSPR.goule;
     fn(ctx, f);
