@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "faca5696-555e-438e-a417-db3ee43ececa",
+    "name": "Shadow golem familiar, isometric pixel art, gothic fantasy. Hulking \nstone construct, wide blocky torso, pillar legs, massive arms, cube-like \nhead. Dark stone grey #1a1a2e with glowing cyan rune carvings #00ccff \non chest and forehead. Eyes are glowing cyan slits. Slow, tank-like. \nCrisp pixel art, transparent background.\n",
+    "prompt": "Shadow golem familiar, isometric pixel art, gothic fantasy. Hulking \nstone construct, wide blocky torso, pillar legs, massive arms, cube-like \nhead. Dark stone grey #1a1a2e with glowing cyan rune carvings #00ccff \non chest and forehead. Eyes are glowing cyan slits. Slow, tank-like. \nCrisp pixel art, transparent background.\n",
+    "size": {
+      "width": 228,
+      "height": 228
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T21:42:45.197201+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T21:46:34.418061"
+}
