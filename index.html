@@ -179,42 +179,55 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
 
 /* ===== MOBILE — paysage (usage principal) ===== */
 @media (max-height:450px){
-  .hud-top{top:4px;left:8px;right:8px;gap:6px}
-  .hud-left{min-width:120px;gap:3px}
-  .hud-right .big{font-size:15px}
-  .hud-right .line{font-size:10px}
-  .bar{height:9px}
-  .bar .label{font-size:8px}
-  .bosshp{top:36px}
-  .loadout{bottom:4px;left:6px;gap:3px}
-  .slot{width:30px;height:30px;font-size:9px}
+  /* HUD jeu */
+  .hud-top{top:3px;left:6px;right:6px;gap:4px}
+  .hud-left{min-width:110px;gap:2px}
+  .hud-right .big{font-size:14px;letter-spacing:.06em}
+  .hud-right .line{font-size:9px}
+  .bar{height:8px}
+  .bar .label{font-size:8px;letter-spacing:.04em}
+  .bosshp{top:32px}
+  .loadout{bottom:3px;left:5px;gap:3px}
+  .slot{width:28px;height:28px;font-size:9px}
   .slot .icn{font-size:13px}
-  .dashui{bottom:4px;right:6px;font-size:9px;padding:4px 7px}
-  #dashBtn{width:64px;height:64px;bottom:62px;right:14px;font-size:10px}
-  .title{font-size:22px;letter-spacing:.12em;margin-bottom:4px}
-  .subtitle{font-size:11px;margin-bottom:10px}
-  .card{padding:10px 12px}
-  .lu-title{font-size:17px}
-  .lu-sub{font-size:10px;margin-bottom:10px}
-  /* Upgrade cards : 3 côte à côte en paysage si la place le permet */
-  .upgrades{gap:8px;flex-wrap:wrap}
-  .up{min-width:120px;max-width:200px;padding:10px 10px;flex:1}
-  .up .icn{font-size:22px;margin-bottom:3px}
-  .up .nm{font-size:12px;margin-bottom:2px}
-  .up .ds{font-size:10px}
-  /* Maps et persos : grille 2×2 en paysage */
-  .chars{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 6px}
-  .char{min-width:unset;max-width:unset;flex:unset;padding:8px 8px}
-  .char h3{font-size:12px;letter-spacing:.1em;margin:3px 0 2px}
-  .char .portrait{height:44px;font-size:26px}
-  .char .role{font-size:9px;margin-bottom:4px}
-  .char .stats{font-size:10px;min-height:unset!important}
-  .char .sig{font-size:10px}
-  .char .map-prev{height:48px;font-size:24px;margin-bottom:5px}
-  .char .mod{font-size:9px;padding:2px 4px;margin-top:4px}
-  .btn{padding:8px 14px;font-size:11px}
-  .stats-grid{font-size:11px;gap:5px 14px}
-  .meta-banner .mt{font-size:24px}
+  .dashui{bottom:3px;right:5px;font-size:9px;padding:3px 6px}
+  #dashBtn{width:60px;height:60px;bottom:55px;right:12px;font-size:9px}
+  .meta-banner .mt{font-size:22px}
+
+  /* Overlays : tout doit tenir sans scroller */
+  .overlay{align-items:center;justify-content:center;padding:6px}
+  .card{width:100%;max-width:100%;padding:6px 10px;box-shadow:none;border-radius:4px}
+  .title{font-size:17px;letter-spacing:.1em;margin:0 0 2px}
+  .subtitle{font-size:9px;margin-bottom:4px;letter-spacing:.2em}
+
+  /* Grille 2×2 maps + persos */
+  .chars{display:grid!important;grid-template-columns:1fr 1fr;gap:5px;margin:4px 0}
+  .char{padding:5px 6px;border-radius:3px}
+  .char h3{font-size:11px;letter-spacing:.08em;margin:2px 0 1px}
+  .char .portrait{height:32px;font-size:20px}
+  .char .role{font-size:8px;margin-bottom:2px;letter-spacing:.08em}
+  .char .stats{font-size:9px;line-height:1.2;min-height:unset!important}
+  .char .sig{font-size:8px;margin-top:2px}
+  .char .map-prev{height:34px;font-size:18px;margin-bottom:3px;border-radius:3px}
+  .char .mod{font-size:8px;padding:1px 4px;margin-top:2px}
+
+  /* Cards level-up */
+  .lu-title{font-size:15px;margin-bottom:1px}
+  .lu-sub{font-size:9px;margin-bottom:6px;letter-spacing:.15em}
+  .upgrades{gap:6px;flex-wrap:nowrap;justify-content:center}
+  .up{min-width:0;flex:1;max-width:200px;padding:7px 8px;border-radius:3px}
+  .up .icn{font-size:18px;margin-bottom:2px}
+  .up .nm{font-size:11px;margin-bottom:1px}
+  .up .ds{font-size:9px;line-height:1.3}
+  .up .lvtag{font-size:8px;margin-top:2px}
+
+  /* Boutons */
+  .btn{padding:6px 12px;font-size:10px;margin:2px;letter-spacing:.15em}
+  [style*="margin-top:18"]{margin-top:6px!important}
+  [style*="margin-top:20"]{margin-top:6px!important}
+
+  /* Stats game over */
+  .stats-grid{font-size:10px;gap:3px 12px;margin:6px auto 8px;max-width:100%}
 }
 
 /* ===== Encoche (notch/safe area) ===== */
