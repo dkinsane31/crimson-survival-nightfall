@@ -145,12 +145,71 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
 
 .fonts{font-family:"Cinzel",serif}
 
-@media (max-width:700px){
-  .title{font-size:30px;letter-spacing:.2em}
-  .hud-left{min-width:160px}
-  .loadout{max-width:70%}
-  .card{padding:20px 18px}
+/* ===== MOBILE — portrait ===== */
+@media (max-width:600px){
+  .title{font-size:26px;letter-spacing:.15em}
+  .hud-left{min-width:130px}
+  .bar{height:10px}
+  .bar .label{font-size:9px}
+  .hud-right .big{font-size:17px}
+  .hud-right .line{font-size:11px}
+  .card{padding:16px 14px;width:96%}
+  .upgrades{flex-direction:column;align-items:center}
+  .up{min-width:unset;width:92%;max-width:320px}
   .chars{flex-direction:column;align-items:stretch}
+  .char{min-width:unset}
+  .slot{width:32px;height:32px}
+  .slot .icn{font-size:14px}
+}
+
+/* ===== MOBILE — paysage (usage principal) ===== */
+@media (max-height:450px){
+  .hud-top{top:4px;left:8px;right:8px;gap:6px}
+  .hud-left{min-width:120px;gap:3px}
+  .hud-right .big{font-size:15px}
+  .hud-right .line{font-size:10px}
+  .bar{height:9px}
+  .bar .label{font-size:8px}
+  .bosshp{top:36px}
+  .loadout{bottom:4px;left:6px;gap:3px}
+  .slot{width:30px;height:30px;font-size:9px}
+  .slot .icn{font-size:13px}
+  .dashui{bottom:4px;right:6px;font-size:9px;padding:4px 7px}
+  #dashBtn{width:64px;height:64px;bottom:62px;right:14px;font-size:10px}
+  .title{font-size:22px;letter-spacing:.12em;margin-bottom:4px}
+  .subtitle{font-size:11px;margin-bottom:10px}
+  .card{padding:10px 14px;max-height:96vh;overflow-y:auto}
+  .lu-title{font-size:17px}
+  .lu-sub{font-size:10px;margin-bottom:10px}
+  .upgrades{gap:8px;flex-wrap:nowrap}
+  .up{min-width:130px;max-width:180px;padding:10px 10px}
+  .up .icn{font-size:22px;margin-bottom:3px}
+  .up .nm{font-size:12px;margin-bottom:2px}
+  .up .ds{font-size:10px}
+  .chars{gap:8px;flex-wrap:nowrap;justify-content:center}
+  .char{min-width:130px;max-width:160px;padding:10px 10px;flex:none}
+  .char h3{font-size:12px;letter-spacing:.12em}
+  .char .portrait{height:50px;font-size:28px}
+  .char .role{font-size:9px;margin-bottom:6px}
+  .char .stats{font-size:10px}
+  .char .sig{font-size:10px}
+  .char .map-prev{height:55px;font-size:26px}
+  .btn{padding:9px 18px;font-size:11px}
+  .stats-grid{font-size:11px;gap:5px 14px}
+  .meta-banner .mt{font-size:24px}
+}
+
+/* ===== Encoche (notch/safe area) ===== */
+@supports(padding:max(0px)){
+  .hud-top{
+    top:max(8px, env(safe-area-inset-top));
+    left:max(12px, env(safe-area-inset-left));
+    right:max(12px, env(safe-area-inset-right));
+  }
+  .loadout{left:max(12px, env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom))}
+  .dashui{right:max(12px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom))}
+  #dashBtn{right:max(24px,env(safe-area-inset-right));bottom:max(90px,calc(env(safe-area-inset-bottom)+60px))}
+  #joy{left:max(20px,env(safe-area-inset-left));bottom:max(80px,calc(env(safe-area-inset-bottom)+50px))}
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
