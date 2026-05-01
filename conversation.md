@@ -417,7 +417,13 @@ Livré dans `nocturne.html` :
 - Icônes générées via ChatGPT + redimensionnées via squoosh.app → `assets/Logo/icon-192.jpg` et `icon-512.jpg`
 - `manifest.json` créé (name, short_name, display fullscreen, orientation landscape, theme #0a0a1a, 2 icônes)
 - `sw.js` créé (cache offline des fichiers principaux)
+- `nocturne.html` renommé en `index.html` pour URL propre (sans filename dans l'URL)
 - `nocturne.html` modifié : ajout `<link rel="manifest">` + `<meta theme-color>` dans le `<head>`, enregistrement service worker en fin de script
+- Icônes converties de JPG → PNG pour compatibilité PWA Android
+- Dépôt GitHub public : `github.com/dkinsane31/crimson-survival-nightfall`
+- GitHub Pages activé sur branche `main`
+- URL du jeu : `https://dkinsane31.github.io/crimson-survival-nightfall/`
+- PWA installée avec succès sur Android ✓
 
 ---
 
