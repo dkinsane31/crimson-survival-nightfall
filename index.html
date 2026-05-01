@@ -22,7 +22,7 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;height:100%;background:var(--bg0);color:var(--ink);
-  font-family:"Inter","Segoe UI",system-ui,sans-serif;overflow:hidden;user-select:none;touch-action:none}
+  font-family:"Inter","Segoe UI",system-ui,sans-serif;overflow:hidden;user-select:none;touch-action:pan-y}
 #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at 50% 30%,#141a2b 0%,#05060a 70%)}
 canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action:none}
@@ -61,11 +61,11 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
 /* ========== OVERLAYS ========== */
 .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse at center,rgba(8,10,20,.72),rgba(5,6,10,.94));
-  backdrop-filter:blur(6px);pointer-events:auto;z-index:20;touch-action:pan-y}
+  backdrop-filter:blur(6px);pointer-events:auto;z-index:20;touch-action:pan-y;overflow-y:auto}
 .card{max-width:680px;width:90%;padding:28px 30px;border:1px solid rgba(180,200,230,.18);
   border-radius:6px;background:linear-gradient(180deg,rgba(20,26,43,.85),rgba(10,13,22,.9));
   box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(111,179,255,.08) inset;text-align:center;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;max-height:95vh}
+  touch-action:pan-y}
 .title{font-family:"Cinzel",Georgia,serif;font-size:44px;letter-spacing:.28em;margin:0 0 8px;
   background:linear-gradient(180deg,#e7ecf5,#6fb3ff 60%,#4a2a8a);-webkit-background-clip:text;background-clip:text;color:transparent;
   text-shadow:0 0 40px rgba(111,179,255,.2)}
@@ -148,9 +148,7 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
 
 /* ===== MOBILE — portrait ===== */
 @media (max-width:600px){
-  /* Autoriser le scroll tactile dans les overlays */
-  .overlay{touch-action:pan-y}
-  .card{touch-action:pan-y;padding:12px 10px;width:98%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .card{padding:12px 10px;width:98%}
 
   .title{font-size:21px;letter-spacing:.1em;margin-bottom:4px}
   .subtitle{font-size:10px;margin-bottom:8px}
@@ -195,23 +193,26 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
   #dashBtn{width:64px;height:64px;bottom:62px;right:14px;font-size:10px}
   .title{font-size:22px;letter-spacing:.12em;margin-bottom:4px}
   .subtitle{font-size:11px;margin-bottom:10px}
-  .card{padding:10px 14px;max-height:96vh;overflow-y:auto}
+  .card{padding:10px 12px}
   .lu-title{font-size:17px}
   .lu-sub{font-size:10px;margin-bottom:10px}
-  .upgrades{gap:8px;flex-wrap:nowrap}
-  .up{min-width:130px;max-width:180px;padding:10px 10px}
+  /* Upgrade cards : 3 côte à côte en paysage si la place le permet */
+  .upgrades{gap:8px;flex-wrap:wrap}
+  .up{min-width:120px;max-width:200px;padding:10px 10px;flex:1}
   .up .icn{font-size:22px;margin-bottom:3px}
   .up .nm{font-size:12px;margin-bottom:2px}
   .up .ds{font-size:10px}
-  .chars{gap:8px;flex-wrap:nowrap;justify-content:center}
-  .char{min-width:130px;max-width:160px;padding:10px 10px;flex:none}
-  .char h3{font-size:12px;letter-spacing:.12em}
-  .char .portrait{height:50px;font-size:28px}
-  .char .role{font-size:9px;margin-bottom:6px}
-  .char .stats{font-size:10px}
+  /* Maps et persos : grille 2×2 en paysage */
+  .chars{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 6px}
+  .char{min-width:unset;max-width:unset;flex:unset;padding:8px 8px}
+  .char h3{font-size:12px;letter-spacing:.1em;margin:3px 0 2px}
+  .char .portrait{height:44px;font-size:26px}
+  .char .role{font-size:9px;margin-bottom:4px}
+  .char .stats{font-size:10px;min-height:unset!important}
   .char .sig{font-size:10px}
-  .char .map-prev{height:55px;font-size:26px}
-  .btn{padding:9px 18px;font-size:11px}
+  .char .map-prev{height:48px;font-size:24px;margin-bottom:5px}
+  .char .mod{font-size:9px;padding:2px 4px;margin-top:4px}
+  .btn{padding:8px 14px;font-size:11px}
   .stats-grid{font-size:11px;gap:5px 14px}
   .meta-banner .mt{font-size:24px}
 }
