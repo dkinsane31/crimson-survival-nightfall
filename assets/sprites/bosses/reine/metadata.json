@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "4d000bef-c116-462e-aaf8-932905229b4b",
+    "name": "Crimson queen mother boss, isometric pixel art, gothic horror. \nTall imposing female figure with a long blood-red trailing gown \nthat spreads wide at the base. Thin spider-like leg appendages \nvisible at the sides of the lower body. Upper body has a regal \ncorsage of dark crimson and black. Crown of blood and bone on head. \nPale face with multiple glowing red eyes. Arms raised slightly, \nclawed hands. Colors: deep crimson #5a0010, black #050005, \nblood red glow #cc0022. Regal, monstrous, terrifying. \nCrisp pixel art, dark background, transparent if possible.\n",
+    "prompt": "Crimson queen mother boss, isometric pixel art, gothic horror. \nTall imposing female figure with a long blood-red trailing gown \nthat spreads wide at the base. Thin spider-like leg appendages \nvisible at the sides of the lower body. Upper body has a regal \ncorsage of dark crimson and black. Crown of blood and bone on head. \nPale face with multiple glowing red eyes. Arms raised slightly, \nclawed hands. Colors: deep crimson #5a0010, black #050005, \nblood red glow #cc0022. Regal, monstrous, terrifying. \nCrisp pixel art, dark background, transparent if possible.\n",
+    "size": {
+      "width": 244,
+      "height": 244
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T21:20:37.768887+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T21:24:19.261452"
+}
