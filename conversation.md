@@ -427,6 +427,14 @@ Livré dans `nocturne.html` :
 
 ---
 
+### 14. Résultat mobile — sprites directionnels OK
+**User** : Jeu fonctionnel sur mobile (portrait). Sprites directionnels OK (8 directions, le perso se retourne selon le mouvement). Personnage statique pendant le déplacement → animations de marche prévues via PixelLab (sprite sheets), pas en procédural.
+
+### 13. Génération des sprites sur PixelLab
+**User** : Sur PixelLab (pixellab.ai), veut générer tous les sprites du jeu (30 PNG : 4 joueurs, 5 ennemis, 5 boss, 4 familiers, 12 tuiles). Commence par les personnages jouables.
+
+---
+
 ## Fichiers actuellement dans `jeu/`
 - `nocturne.html` — jeu Survivors iso (pipeline PNG + animations procédurales)
 - `conversation.md` — ce fichier
