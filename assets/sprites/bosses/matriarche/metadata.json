@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "22d91c6e-a58b-4d46-897b-375186e81943",
+    "name": "Giant spider matriarch boss, isometric pixel art, gothic horror. \nLarge arachnid creature with 4 visible thick black legs and a bloated \nabdomen with pulsing venom sacs. Upper torso is humanoid female, pale \nbone-white, with 5 glowing red-orange eyes arranged on the face. \nMandibles visible near the mouth. Body color deep black #0a0510 with \ndark purple accents #3a1040. Venom sacs on abdomen glow sickly green. \nMassive imposing silhouette. Crisp pixel art, dark background, \ntransparent if possible.\n",
+    "prompt": "Giant spider matriarch boss, isometric pixel art, gothic horror. \nLarge arachnid creature with 4 visible thick black legs and a bloated \nabdomen with pulsing venom sacs. Upper torso is humanoid female, pale \nbone-white, with 5 glowing red-orange eyes arranged on the face. \nMandibles visible near the mouth. Body color deep black #0a0510 with \ndark purple accents #3a1040. Venom sacs on abdomen glow sickly green. \nMassive imposing silhouette. Crisp pixel art, dark background, \ntransparent if possible.\n",
+    "size": {
+      "width": 224,
+      "height": 224
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T20:58:22.598146+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T21:02:24.438823"
+}
