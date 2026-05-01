@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "b3c33c28-b213-4c6a-b6c8-68c212fdebd5",
+    "name": "Ghostly shadow wraith, isometric pixel art, gothic horror. \nTranslucent floating blob spirit, no legs \u2014 dark smoky body \nfading into wispy tendrils at the bottom trailing toward the \nground. Deep navy-black body #050814 with dark blue outline \n#2a3a5a, semi-transparent ghostly feel. Single glowing icy \nblue eye #9cd0ff at center. Small, light, fast-looking silhouette. \nFloats slightly above ground. Colors: near-black body, ice blue \nglow. Ethereal, spectral, unsettling. Crisp pixel art, dark \nbackground, transparent if possible.\n",
+    "prompt": "Ghostly shadow wraith, isometric pixel art, gothic horror. \nTranslucent floating blob spirit, no legs \u2014 dark smoky body \nfading into wispy tendrils at the bottom trailing toward the \nground. Deep navy-black body #050814 with dark blue outline \n#2a3a5a, semi-transparent ghostly feel. Single glowing icy \nblue eye #9cd0ff at center. Small, light, fast-looking silhouette. \nFloats slightly above ground. Colors: near-black body, ice blue \nglow. Ethereal, spectral, unsettling. Crisp pixel art, dark \nbackground, transparent if possible.\n",
+    "size": {
+      "width": 204,
+      "height": 204
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T20:38:54.881325+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T20:44:04.702363"
+}
