@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "c4ebed9a-6def-4567-b701-b0b5d1218a91",
+    "name": "renega vampire werewolf hybrid warrior, heavy dark armor, claws, beast-like posture, glowing amber eyes, dark gothic fantasy",
+    "prompt": "renega vampire werewolf hybrid warrior, heavy dark armor, claws, beast-like posture, glowing amber eyes, dark gothic fantasy",
+    "size": {
+      "width": 216,
+      "height": 216
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T16:46:34.786799+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T17:02:57.559831"
+}
