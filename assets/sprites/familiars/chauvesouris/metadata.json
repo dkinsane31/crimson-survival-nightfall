@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "a01b59c1-9ce5-4406-8da8-aa29965bd2e7",
+    "name": "Vampire bat familiar, isometric pixel art, gothic horror. Small \nflying bat with wings spread wide, tiny body, pointed ears, red glowing \neyes #ff2a44. Black body #0a0510, dark wing membrane. Cute but menacing. \nCrisp pixel art, transparent background.\n",
+    "prompt": "Vampire bat familiar, isometric pixel art, gothic horror. Small \nflying bat with wings spread wide, tiny body, pointed ears, red glowing \neyes #ff2a44. Black body #0a0510, dark wing membrane. Cute but menacing. \nCrisp pixel art, transparent background.\n",
+    "size": {
+      "width": 256,
+      "height": 256
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T21:36:10.538208+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T21:40:42.825888"
+}
