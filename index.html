@@ -147,19 +147,30 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
 
 /* ===== MOBILE — portrait ===== */
 @media (max-width:600px){
-  .title{font-size:26px;letter-spacing:.15em}
+  .title{font-size:24px;letter-spacing:.12em;margin-bottom:6px}
+  .subtitle{font-size:11px;margin-bottom:10px}
   .hud-left{min-width:130px}
   .bar{height:10px}
   .bar .label{font-size:9px}
   .hud-right .big{font-size:17px}
   .hud-right .line{font-size:11px}
-  .card{padding:16px 14px;width:96%}
+  .card{padding:14px 12px;width:98%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  /* Grille 2 colonnes pour maps et personnages */
+  .chars{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-wrap:unset}
+  .char{min-width:unset;max-width:unset;flex:unset;padding:10px 8px}
+  .char h3{font-size:13px;letter-spacing:.12em}
+  .char .role{font-size:9px;margin-bottom:5px}
+  .char .stats{font-size:10px;line-height:1.4;min-height:unset!important}
+  .char .sig{font-size:10px;margin-top:6px}
+  .char .portrait{height:50px;font-size:28px}
+  .char .map-prev{height:52px;font-size:26px;margin-bottom:6px}
+  .char .mod{font-size:9px;padding:2px 5px;margin-top:5px}
+  /* Cartes d'upgrade en colonne */
   .upgrades{flex-direction:column;align-items:center}
-  .up{min-width:unset;width:92%;max-width:320px}
-  .chars{flex-direction:column;align-items:stretch}
-  .char{min-width:unset}
+  .up{min-width:unset;width:94%;max-width:340px}
   .slot{width:32px;height:32px}
   .slot .icn{font-size:14px}
+  .btn{padding:9px 16px;font-size:11px}
 }
 
 /* ===== MOBILE — paysage (usage principal) ===== */
