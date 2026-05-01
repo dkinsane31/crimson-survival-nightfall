@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "fcc28ea5-db2a-4442-a921-31099ce813e5",
+    "name": "Necromantic raven familiar, isometric pixel art, gothic horror. \nBlack raven in flight, wings spread, tail feathers visible, golden beak \n#ccaa00, single red glowing eye #ff2a44. Pure black feathers #050505. \nElegant and dark. Crisp pixel art, transparent background.\n",
+    "prompt": "Necromantic raven familiar, isometric pixel art, gothic horror. \nBlack raven in flight, wings spread, tail feathers visible, golden beak \n#ccaa00, single red glowing eye #ff2a44. Pure black feathers #050505. \nElegant and dark. Crisp pixel art, transparent background.\n",
+    "size": {
+      "width": 228,
+      "height": 228
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T21:48:13.934234+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T21:52:00.023459"
+}
