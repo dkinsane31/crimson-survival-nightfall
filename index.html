@@ -477,8 +477,16 @@ const ASSET_MANIFEST = [
   { id:'player_necro_north-west', path:'assets/sprites/players/necro/rotations/north-west.png' },
   { id:'player_necro_south-east', path:'assets/sprites/players/necro/rotations/south-east.png' },
   { id:'player_necro_south-west', path:'assets/sprites/players/necro/rotations/south-west.png' },
-  // Ennemis
-  { id:'enemy_traqueur',    path:'assets/sprites/enemies/traqueur.png' },
+  // Ennemis — Traqueur (8 directions)
+  { id:'enemy_traqueur_south',      path:'assets/sprites/enemies/traqueur/rotations/south.png' },
+  { id:'enemy_traqueur_north',      path:'assets/sprites/enemies/traqueur/rotations/north.png' },
+  { id:'enemy_traqueur_east',       path:'assets/sprites/enemies/traqueur/rotations/east.png' },
+  { id:'enemy_traqueur_west',       path:'assets/sprites/enemies/traqueur/rotations/west.png' },
+  { id:'enemy_traqueur_north-east', path:'assets/sprites/enemies/traqueur/rotations/north-east.png' },
+  { id:'enemy_traqueur_north-west', path:'assets/sprites/enemies/traqueur/rotations/north-west.png' },
+  { id:'enemy_traqueur_south-east', path:'assets/sprites/enemies/traqueur/rotations/south-east.png' },
+  { id:'enemy_traqueur_south-west', path:'assets/sprites/enemies/traqueur/rotations/south-west.png' },
+  // Autres ennemis (fallback canvas si PNG absent)
   { id:'enemy_brute',       path:'assets/sprites/enemies/brute.png' },
   { id:'enemy_tireur',      path:'assets/sprites/enemies/tireur.png' },
   { id:'enemy_hybride',     path:'assets/sprites/enemies/hybride.png' },
@@ -5056,8 +5064,11 @@ function drawEnemyIso(e){
   ctx.translate(s.x, s.y + anim.bob);
   ctx.rotate(anim.tilt);
   ctx.scale(anim.squashX, anim.squashY);
-  const pngId = e.boss ? ('boss_' + e.bossDef.id) : ('enemy_' + e.kind);
-  if(!drawPNGSprite(pngId)){
+  const baseId = e.boss ? ('boss_' + e.bossDef.id) : ('enemy_' + e.kind);
+  const h = PNG_TARGET_H[baseId] || 100;
+  // Essaie le sprite directionnel (basé sur l'angle de déplacement vers le joueur)
+  const eDir = getCharDir(Math.cos(e.angle||0), Math.sin(e.angle||0));
+  if(!drawPNGSprite(baseId + '_' + eDir, h) && !drawPNGSprite(baseId, h)){
     ctx.scale(ISO.spriteScale, ISO.spriteScale);
     const drawer = e.boss
       ? (ISOSPR['boss_'+e.bossDef.id] || ISOSPR.boss_alpha)

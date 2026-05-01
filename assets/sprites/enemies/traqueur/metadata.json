@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "46caea4b-9367-4206-b935-63d562c70a8c",
+    "name": "werewolf beast, hunched predator posture, dark fur, glowing red eyes, claws, gothic dark fantasy",
+    "prompt": "werewolf beast, hunched predator posture, dark fur, glowing red eyes, claws, gothic dark fantasy",
+    "size": {
+      "width": 232,
+      "height": 232
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T18:41:20.42957+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T18:46:15.017674"
+}
