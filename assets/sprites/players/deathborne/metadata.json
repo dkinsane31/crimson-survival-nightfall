@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "f7c77d2d-f45d-4683-b171-814dd4982d83",
+    "name": "pixel art, isometric 3/4 view, vampire hunter, black hooded cloak red lining, dual pistols, glowing red eyes, dark fantasy, transparent background, 128x128",
+    "prompt": "pixel art, isometric 3/4 view, vampire hunter, black hooded cloak red lining, dual pistols, glowing red eyes, dark fantasy, transparent background, 128x128",
+    "size": {
+      "width": 196,
+      "height": 196
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T16:10:44.108679+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T16:16:38.379983"
+}

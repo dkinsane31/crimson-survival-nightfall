@@ -351,8 +351,16 @@ const ASSETS = {
 
 // Manifest : tous les PNG optionnels. Si absent, fallback canvas.
 const ASSET_MANIFEST = [
-  // Joueurs
-  { id:'player_deathborne', path:'assets/sprites/players/deathborne.png' },
+  // Joueurs — Deathborne (8 directions)
+  { id:'player_deathborne_south',      path:'assets/sprites/players/deathborne/rotations/south.png' },
+  { id:'player_deathborne_north',      path:'assets/sprites/players/deathborne/rotations/north.png' },
+  { id:'player_deathborne_east',       path:'assets/sprites/players/deathborne/rotations/east.png' },
+  { id:'player_deathborne_west',       path:'assets/sprites/players/deathborne/rotations/west.png' },
+  { id:'player_deathborne_north-east', path:'assets/sprites/players/deathborne/rotations/north-east.png' },
+  { id:'player_deathborne_north-west', path:'assets/sprites/players/deathborne/rotations/north-west.png' },
+  { id:'player_deathborne_south-east', path:'assets/sprites/players/deathborne/rotations/south-east.png' },
+  { id:'player_deathborne_south-west', path:'assets/sprites/players/deathborne/rotations/south-west.png' },
+  // Autres joueurs (fallback canvas si PNG absent)
   { id:'player_selene',     path:'assets/sprites/players/selene.png' },
   { id:'player_hybride',    path:'assets/sprites/players/hybride.png' },
   { id:'player_necro',      path:'assets/sprites/players/necro.png' },
@@ -4853,6 +4861,22 @@ const ISOSPR = {
   }
 };
 
+// Retourne la direction sprite (8 points cardinaux) selon la vélocité monde → espace écran iso
+function getCharDir(vx, vy){
+  if(Math.hypot(vx,vy) < 10) return 'south';
+  const sdx = (vx - vy) * ISO.sx;
+  const sdy = (vx + vy) * ISO.sy;
+  const a = Math.atan2(sdy, sdx) * 180 / Math.PI;
+  if(a > -22.5  && a <= 22.5)  return 'east';
+  if(a > 22.5   && a <= 67.5)  return 'south-east';
+  if(a > 67.5   && a <= 112.5) return 'south';
+  if(a > 112.5  && a <= 157.5) return 'south-west';
+  if(a > -157.5 && a <= -112.5)return 'north-west';
+  if(a > -112.5 && a <= -67.5) return 'north';
+  if(a > -67.5  && a <= -22.5) return 'north-east';
+  return 'west';
+}
+
 function drawPlayerIso(p){
   const s = worldToScreen(p.x, p.y, 0);
   // Aura (cercle lumineux au sol)
@@ -4876,8 +4900,11 @@ function drawPlayerIso(p){
   ctx.translate(s.x, s.y + anim.bob);
   ctx.rotate(anim.tilt + attackTilt);
   ctx.scale(anim.squashX, anim.squashY);
-  const pngId = 'player_' + State.char;
-  if(!drawPNGSprite(pngId)){
+  const baseId = 'player_' + State.char;
+  const dir    = getCharDir(p.vx||0, p.vy||0);
+  const dirId  = baseId + '_' + dir;
+  const h      = PNG_TARGET_H[baseId] || 130;
+  if(!drawPNGSprite(dirId, h) && !drawPNGSprite(baseId, h)){
     ctx.scale(ISO.spriteScale, ISO.spriteScale);
     ISOSPR.player(ctx, p, State.blMode>0);
   }
