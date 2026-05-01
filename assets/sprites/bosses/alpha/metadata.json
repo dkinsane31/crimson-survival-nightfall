@@ -1,0 +1,30 @@
+{
+  "character": {
+    "id": "00f69dcc-8452-4f22-8e5c-f9f0891006e3",
+    "name": "Massive Alpha Lycan werewolf boss, isometric pixel art, gothic \nhorror. Enormous bipedal werewolf standing upright, hulking \nmuscular build. Deep black-red fur #120408, dark crimson outline \n#6a0e1a. Huge rounded shoulders with massive arms, 5 white curved \nclaws per hand. Two large curved horns on skull. Compact bestial \nhead with wolf snout, visible fangs. Two intense glowing red eyes \n#ff2a44 with strong glow. Red muscle lines visible on chest. \nVery large imposing silhouette, twice the size of a normal enemy. \nCrisp pixel art, dark background, transparent if possible.\n",
+    "prompt": "Massive Alpha Lycan werewolf boss, isometric pixel art, gothic \nhorror. Enormous bipedal werewolf standing upright, hulking \nmuscular build. Deep black-red fur #120408, dark crimson outline \n#6a0e1a. Huge rounded shoulders with massive arms, 5 white curved \nclaws per hand. Two large curved horns on skull. Compact bestial \nhead with wolf snout, visible fangs. Two intense glowing red eyes \n#ff2a44 with strong glow. Red muscle lines visible on chest. \nVery large imposing silhouette, twice the size of a normal enemy. \nCrisp pixel art, dark background, transparent if possible.\n",
+    "size": {
+      "width": 256,
+      "height": 256
+    },
+    "template_id": "mannequin",
+    "directions": 8,
+    "view": "low top-down",
+    "created_at": "2026-05-01T20:50:19.44565+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "south-east": "rotations/south-east.png",
+      "east": "rotations/east.png",
+      "north-east": "rotations/north-east.png",
+      "north": "rotations/north.png",
+      "north-west": "rotations/north-west.png",
+      "west": "rotations/west.png",
+      "south-west": "rotations/south-west.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-05-01T20:55:38.934010"
+}
