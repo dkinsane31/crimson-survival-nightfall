@@ -1,19 +1,22 @@
-const CACHE = 'nocturne-v1';
-const FILES = [
-  './index.html',
-  './manifest.json',
-  './assets/Logo/icon-192.jpg',
-  './assets/Logo/icon-512.jpg'
-];
+const CACHE = 'nocturne-v3';
 
+// À l'installation : on prend le contrôle immédiatement
 self.addEventListener('install', e => {
+  self.skipWaiting();
+});
+
+// À l'activation : on supprime tous les anciens caches
+self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(FILES))
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
 });
 
+// Réseau en priorité, cache en fallback
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });
