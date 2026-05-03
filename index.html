@@ -5863,8 +5863,8 @@ function updateProjectiles(dt){
       if(len(e.x-p.x, e.y-p.y) < e.r + p.r){
         damageEnemy(e, p.dmg * State.pas.dmgMult, p.x, p.y, p);
         p.hits.add(e);
-        // Jalon Deathborne lvl 10 — Pistolets Fulminants : explosion AoE
-        if((p.kind==='pistol'||p.kind==='arsenal') && State.pas.milExplosiveBullets){
+        // Jalon Deathborne lvl 10 — Pistolets Fulminants : explosion AoE (pas depuis le clone)
+        if((p.kind==='pistol'||p.kind==='arsenal') && State.pas.milExplosiveBullets && !p.fromClone){
           State.waves.push({ x:p.x, y:p.y, r:6, maxR:60*State.pas.areaMult,
             life:0.22, maxLife:0.22, dmg:p.dmg*0.30*State.pas.dmgMult, color:'#ffd070' });
           for(let _i=0;_i<3;_i++) spawnPart(p.x, p.y, '#ffb030', 0.3, rand(-70,70), rand(-70,70));
@@ -6309,7 +6309,7 @@ function updateFamiliars(dt){
       f.vy = lerp(f.vy, uy*alphaSpd, 0.22);
       f.x += f.vx*dt; f.y += f.vy*dt;
       if(target && f.hitCd<=0 && len(target.x-f.x, target.y-f.y) < target.r + f.r + 4){
-        damageEnemy(target, f.dmg * 2.0, f.x, f.y, 'loup');
+        damageEnemy(target, f.dmg * 1.6, f.x, f.y, 'loup');
         f.hitCd = 0.30;
         for(let _i=0;_i<3;_i++) spawnPart(f.x, f.y, '#ff8030', 0.5, rand(-80,80), rand(-80,80));
       }
@@ -6338,6 +6338,7 @@ function updateFamiliars(dt){
     }
   }
   State.familiars = State.familiars.filter(f=>!f.dead);
+  if(State.familiars.length > 18) State.familiars.length = 18;
 
   // Chef de Meute (Hybride) — respawn des loups jusqu'à 5 max
   if(State.pas && State.pas.wolfPack){

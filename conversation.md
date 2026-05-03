@@ -439,3 +439,109 @@ Livré dans `nocturne.html` :
 - `nocturne.html` — jeu Survivors iso (pipeline PNG + animations procédurales)
 - `conversation.md` — ce fichier
 - `assets/sprites/` — dossier sprites PNG (partiellement rempli)
+
+---
+
+## Session 2026-05-01 (suite)
+
+### 15. Intégration sprites directionnels — Brute
+
+**User** : "ok pour la brute" (screenshot du dossier `assets/sprites/enemies/brute/` avec 8 PNGs dans `rotations/`)
+
+**Assistant** : Intégration des sprites directionnels de la brute dans `ASSET_MANIFEST` (index.html) :
+- 8 entrées ajoutées : `enemy_brute_south`, `_north`, `_east`, `_west`, `_north-east`, `_north-west`, `_south-east`, `_south-west`
+- Chemin : `assets/sprites/enemies/brute/rotations/{direction}.png`
+- L'entrée procédurale `enemy_brute` (fallback) supprimée, remplacée par les 8 directions
+- `PNG_TARGET_H['enemy_brute'] = 130` déjà en place → taille correcte
+- `drawEnemyIso` utilise déjà `getCharDir(Math.cos(e.angle), Math.sin(e.angle))` → les 8 directions fonctionnent automatiquement
+- Commit `81eebc6` — push vers `dkinsane31.github.io/crimson-survival-nightfall`
+
+**Fichiers touchés** : `index.html` (ASSET_MANIFEST), `assets/sprites/enemies/brute/rotations/` (8 PNGs + metadata.json)
+
+---
+
+## État sprites — 2026-05-01
+
+### Intégrés avec 8 directions
+- `player_deathborne` ✓
+- `player_selene` ✓
+- `player_hybride` ✓
+- `player_necro` ✓
+- `enemy_traqueur` ✓
+- `enemy_brute` ✓
+- `enemy_tireur` ✓
+- `enemy_hybride` ✓
+- `enemy_ombre` ✓
+- `boss_alpha` ✓ — commit 6f0fe2a
+- `boss_matriarche` ✓ — commit 13bbc7a
+- `boss_gardien` ✓ — commit be1320e
+- `boss_seigneur` ✓ — commit 73fe841
+- `boss_reine` ✓ — commit da1ac74
+
+- `fam_goule` ✓ — commit c0de557
+- `fam_chauvesouris` ✓ — commit ccf0c32
+- `fam_golem` ✓ — commit 8cfd59b
+- `fam_corbeau` ✓ — commit 5b6b004
+
+### À faire
+- Tuiles : `tile_crypte_1/2/3`, `tile_cath_1/2/3`, `tile_labo_1/2/3`, `tile_cimetiere_1/2/3`
+- Animations de marche (sprite sheets PixelLab) — reporté
+
+---
+
+## Session 2026-05-02 — Bilan sprites complet
+
+Tous les sprites jouables, ennemis, boss et familiers sont intégrés avec 8 directions.
+
+### Bug corrigé — directions ennemis/familiers (commit d29bba7)
+**Problème** : `drawEnemyIso` passait `Math.cos(e.angle)` et `Math.sin(e.angle)` à `getCharDir`. Ces valeurs ont une magnitude ~1, en dessous du seuil `< 10` de `getCharDir`, donc tous les ennemis affichaient toujours `south`.
+**Fix** : utiliser `e.vx` et `e.vy` directement (vélocités réelles, 80–300+).
+Les familiers utilisaient déjà `f.vx/f.vy` correctement.
+
+### Nouvelles signatures exclusives (commit 55fffa4)
+- **Deathborne** : Balles Rebondissantes — ricochet automatique vers 2e cible après le 1er impact
+- **Selene** : Lame Explosive — chaque coup de lame déclenche une AoE orange
+- **Hybride** : Chef de Meute — jusqu'à 5 loups guerriers (ISOSPR.loup yeux ambrés) respawnent toutes les 3.5s
+- **Necro** : Invocation d'Outre-Tombe — chaque ennemi tué ressuscite comme revenant allié (max 8, permanent)
+- Sprite canvas ISOSPR.loup et ISOSPR.revenant ajoutés
+- Bug direction ennemis corrigé (vx/vy au lieu de cos/sin angle)
+
+Prochaine grande étape : les tuiles de sol (12 PNG) ou les animations de marche.
+
+---
+
+## Session 2026-05-03 — Système de jalons de niveau
+
+### Jalons implémentés (commit 982f449)
+Écran rouge sang "JALON" qui s'affiche aux niveaux 10, 20, 50, 100. Chaque personnage a 4 pouvoirs exclusifs :
+
+**DEATHBORNE**
+- Nvl 10 : Pistolets Fulminants — explosion AoE 60px / 30% dmg à chaque impact (pas depuis clone)
+- Nvl 20 : Visée Mortelle — balles avec homing (0.07 rad/frame)
+- Nvl 50 : Tourelle du Néant — tourelle orbitale, tir toutes 0.9s, dessinée en iso
+- Nvl 100 : Spirale d'Extinction — +50% dégâts, trajectoire hélicoïdale
+
+**SELENE NOIRE**
+- Nvl 10 : Instinct Fantôme — +22% esquive passive
+- Nvl 20 : Ombre Portée — CD dash ×0.60 (dashCdMult)
+- Nvl 50 : Zone Critique — onde AoE sur crit (30% dmg, 80px)
+- Nvl 100 : Dédoublement — clone miroir 65% dégâts via spawnProj
+
+**HYBRIDE RENÉGAT**
+- Nvl 10 : Armure Bestiale — armor ×0.88 (-12% dégâts reçus)
+- Nvl 20 : Cri de Guerre — stagger 1.8s rayon 300px toutes 8s
+- Nvl 50 : Mutation Sauvage — ×1.5 dmg sous 50% PV
+- Nvl 100 : Loups Alphas — loups ×1.6 dmg, plus grands/rapides au spawn
+
+**NÉCROMANCIEN**
+- Nvl 10 : Marche des Morts — goules +40% vitesse, +20% dégâts
+- Nvl 20 : Tribunal des Ombres — spawne 1 chauve-souris permanente
+- Nvl 50 : Colosse d'Obsidienne — spawne 1 golem permanent
+- Nvl 100 : Seigneur des Corbeaux — spawne 1 corbeau permanent
+
+### Équilibre
+- Cap total familiers : 18 maximum
+- Explosions pistolets : exclues depuis les balles clone (`fromClone:true`)
+- Loups Alphas : ×1.6 au lieu de ×2.0 (moins abusé)
+- Jalons se déclenchent APRÈS les écrans de level-up
+- Milestone screen masqué dans `startGame`
