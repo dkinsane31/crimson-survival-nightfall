@@ -585,3 +585,50 @@ assets/sprites/tiles/
 
 ### Push automatique retenu
 L'utilisateur teste sur mobile via GitHub Pages. Désormais commit + push systématique après chaque modification, sans attendre la demande explicite.
+
+---
+
+## Session 2026-05-04 (suite) — Bugs + refonte armes partagées
+
+### Bugs corrigés (commit 4b09eb0, 1e184c2)
+
+**Bug 1 — Armes d'invocation Nécro proposées à tous les persos**
+- Cause : `possibleUpgrades()` ne filtrait pas par `char` dans la section "nouvelle arme"
+- Fix : ajout de `char:'necro'` sur goule/chauvesouris/golem/corbeau + filtre `if(def.char && def.char !== State.char) continue`
+
+**Bug 2 — Armes de départ proposées aux mauvais persos**
+- Fix : ajout de `char:'deathborne'` sur pistolets, `char:'selene'` sur lames, `char:'hybride'` sur onde
+
+**Bug 3 — Boutons Pause/Mute/Quit ne répondent pas sur mobile**
+- Cause : `window.addEventListener('touchstart', e.preventDefault())` bloquait TOUS les touches quand `phase==='playing'`, y compris sur les boutons UI
+- Fix : `if(e.target.closest('button, .overlay, #gameTopbar, a')) return;` avant `preventDefault()`
+
+**Bug 4 — Cartes signature sans bordure dorée**
+- Cause : `cls += ' evo'` pour les signatures était appliqué après `d.className = cls`
+- Fix : déplacé avant l'assignation
+
+### Refonte armes partagées (commit 28bd759)
+
+**Armes remplacées** (rayon/sceau/éclats trop génériques pour le thème)
+
+| Ancienne | Nouvelle | Mécanique |
+|---|---|---|
+| Rayon Crépusculaire | **Faux Spectrale** | Arc de ~120° devant le joueur, touche tous les ennemis dans le cône |
+| Sceau Abyssal | **Brume Pestilentielle** | Zone de brume toxique 5s, dégâts continus |
+| Éclats d'Argent Noir | **Tempête de Sang** | Gerbe de sang dans toutes directions, +3% vol de vie intégré par coup |
+
+**Nouvelles évolutions**
+
+| Evo | Base | Condition | Effet |
+|---|---|---|---|
+| Moisson Maudite | Faux | Cadence ×4 | 3 faux en éventail, cadence élevée |
+| Voile de Mort | Brume | Zone ×4 | Brume permanente qui suit le joueur |
+| Déluge Carmin | Tempête | Vol de vie ×3 | 18 projectiles, portée doublée |
+
+**Combos mis à jour**
+- Salve Funèbre (pistolets+faux) — 1 tir/4 = mini arc de faux
+- Déluge Cramoisi (brume+tempête) — chaque brume tire 8 gouttes en étoile
+- Pacte Mortel (faux+lames) — faux active boost ×2 rotation lames 2s (via `State.fauxTimer`)
+- Fusillade Sanglante (pistolets+tempête) — chaque balle éclate en 3 gouttes de sang
+- Maelström Abyssal (onde+brume) — onde laisse un nuage de brume à son apogée
+- Vortex Sanguin (lames+onde) — inchangé
