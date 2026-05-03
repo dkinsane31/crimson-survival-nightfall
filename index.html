@@ -1053,18 +1053,21 @@ const WEAPONS = {
           spiralRate: State.pas.milSpiral ? (i%2===0 ? 0.033 : -0.033) : 0
         });
       }
-      // COMBO · Salve Crépusculaire (1 tir sur 4 devient un mini-faisceau)
+      // COMBO · Salve Funèbre (1 tir sur 4 déclenche un coup de faux spectrale)
       if(State.combos.salve){
         w._salve = (w._salve||0) + 1;
         if(w._salve >= 4){
           w._salve = 0;
-          State.beams.push({
-            fromX:State.player.x, fromY:State.player.y,
-            toX:t.x, toY:t.y, target:t,
-            life:0.3, maxLife:0.3,
-            dmg: 38 * State.pas.dmgMult,
-            width:4, color:'#ffd9a8', kind:'rayon'
-          });
+          const sa = Math.atan2(t.y-State.player.y, t.x-State.player.x);
+          for(const e of State.enemies){
+            if(e.dead) continue;
+            const ex=e.x-State.player.x, ey=e.y-State.player.y;
+            if(Math.hypot(ex,ey) > 200+e.r) continue;
+            let df=Math.atan2(ey,ex)-sa;
+            while(df>Math.PI) df-=Math.PI*2; while(df<-Math.PI) df+=Math.PI*2;
+            if(Math.abs(df) <= 1.1) damageEnemy(e, 40*State.pas.dmgMult, e.x, e.y, 'faux');
+          }
+          for(let i=0;i<5;i++) spawnPart(State.player.x, State.player.y, '#9b6bff', 0.4, Math.cos(sa+rand(-1.1,1.1))*120, Math.sin(sa+rand(-1.1,1.1))*120);
         }
       }
       AUD.shot();
@@ -1079,8 +1082,8 @@ const WEAPONS = {
       const n = 2 + Math.floor(w.level/1.5);
       const radius = (72 + w.level*10) * State.pas.areaMult;
       let rotSpd = (2.6 + w.level*0.35) * (State.pas.bladeSpdMult||1);
-      // COMBO · Pacte Glacial : lames ×2 rotation quand au moins un rayon actif
-      if(State.combos.pacte && State.beams.length>0) rotSpd *= 2;
+      // COMBO · Pacte Mortel : après un coup de faux, lames ×2 vitesse 2s
+      if(State.combos.pacte && (State.fauxTimer||0)>0) rotSpd *= 2;
       p.orbit = p.orbit || { phase:0 };
       p.orbit.phase = (p.orbit.phase + rotSpd*dt) % TAU;
       p.blades = [];
@@ -1131,53 +1134,66 @@ const WEAPONS = {
       const dmg = (22 + w.level*11) * State.pas.dmgMult;
       const px = State.player.x, py = State.player.y;
       State.waves.push({ x:px, y:py, r:10, maxR:radius, life:0.5, maxLife:0.5, dmg, color:'#ff3a5a',
-        spawnSeal: State.combos.maelstrom ? { r: radius*0.5, dmg: dmg*0.2 } : null });
+        spawnSeal: State.combos.maelstrom ? { r: radius*0.5, dmg: dmg*0.2, color:'#5a2a6a', kind:'brume' } : null });
       addShake(4);
     },
   },
-  sceau:{
-    name:'Sceau Abyssal', icn:'🜃', desc:'Zone violette au sol, dégâts continus.',
+  brume:{
+    name:'Brume Pestilentielle', icn:'🌫', desc:'Nuage de brume toxique stagnant — empoisonne tout ce qui entre.',
     maxLevel:6,
-    cooldown(w){ return 4.2 / (1+0.06*w.level) / State.pas.atkSpeedMult; },
+    cooldown(w){ return 4.0 / (1+0.06*w.level) / State.pas.atkSpeedMult; },
     fire(w){
       const t = nearestEnemy(State.player, 500) || State.player;
       const jitter = 40;
       const zx = t.x+rand(-jitter,jitter), zy = t.y+rand(-jitter,jitter);
       State.zones.push({
         x:zx, y:zy,
-        r:(60 + w.level*14) * State.pas.areaMult,
-        life:3.5, tick:0, dmg:(6+w.level*4)*State.pas.dmgMult,
-        color:'#7a3ad0', kind:'sceau'
+        r:(70 + w.level*16) * State.pas.areaMult,
+        life:5.0, tick:0, dmg:(5+w.level*3.5)*State.pas.dmgMult,
+        color:'#4a2a6a', kind:'brume'
       });
-      // COMBO · Rosace Profane : 8 éclats en étoile
+      // COMBO · Déluge Cramoisi : 8 gouttes de sang en étoile
       if(State.combos.rosace){
         for(let i=0;i<8;i++){
           const ang = i*TAU/8;
           spawnProj({
             x:zx, y:zy,
-            vx:Math.cos(ang)*380, vy:Math.sin(ang)*380,
-            dmg:16*State.pas.dmgMult, pierce:1, life:0.55,
-            color:'#b48aff', trail:'#6a3aca', r:4, kind:'eclat'
+            vx:Math.cos(ang)*360, vy:Math.sin(ang)*360,
+            dmg:18*State.pas.dmgMult, pierce:1, life:0.6,
+            color:'#cc2244', trail:'#660a22', r:5, kind:'tempete'
           });
         }
       }
     }
   },
-  rayon:{
-    name:'Rayon Crépusculaire', icn:'🜁', desc:'Faisceau bleu sur la cible prioritaire.',
+  faux:{
+    name:'Faux Spectrale', icn:'🌙', desc:'Balaie une grande faux d\'ombre en arc, traversant tous les ennemis.',
     maxLevel:6,
-    cooldown(w){ return 2.8 / (1+0.08*w.level) / State.pas.atkSpeedMult; },
+    cooldown(w){ return 1.8 / (1+0.07*w.level) / State.pas.atkSpeedMult; },
     fire(w){
-      const t = strongestEnemy(State.player, 700);
-      if(!t) return;
-      State.beams.push({
-        fromX:State.player.x, fromY:State.player.y,
-        toX:t.x, toY:t.y, target:t,
-        life:0.55, maxLife:0.55,
-        dmg:(34 + w.level*18) * State.pas.dmgMult,
-        width:6 + w.level*1.5, color:'#9fe0ff', kind:'rayon'
-      });
-      AUD.blip(1800,0.2,'sawtooth',0.08,-900);
+      const t = nearestEnemy(State.player, 800);
+      const ang = t ? Math.atan2(t.y-State.player.y, t.x-State.player.x) : (State.player.angle||0);
+      const radius = (150 + w.level*22) * State.pas.areaMult;
+      const arcSpan = Math.PI * 0.68;
+      const dmg = (30 + w.level*16) * State.pas.dmgMult;
+      for(const e of State.enemies){
+        if(e.dead) continue;
+        const ex=e.x-State.player.x, ey=e.y-State.player.y;
+        if(Math.hypot(ex,ey) > radius+e.r) continue;
+        let df=Math.atan2(ey,ex)-ang;
+        while(df>Math.PI) df-=Math.PI*2; while(df<-Math.PI) df+=Math.PI*2;
+        if(Math.abs(df) <= arcSpan/2) damageEnemy(e, dmg, e.x, e.y, 'faux');
+      }
+      // Effet visuel : arc de particules violettes
+      for(let i=0;i<10;i++){
+        const a=ang+rand(-arcSpan/2, arcSpan/2);
+        const d=rand(radius*0.5, radius);
+        spawnPart(State.player.x+Math.cos(a)*d, State.player.y+Math.sin(a)*d, '#9b6bff', 0.4, rand(-30,30), rand(-30,30));
+      }
+      // COMBO · Pacte Mortel : active le boost de lames 2s
+      if(State.combos.pacte) State.fauxTimer = 2.0;
+      addShake(3);
+      AUD.blip(280, 0.18, 'sawtooth', 0.14, -180);
     }
   },
   goule:{
@@ -1281,22 +1297,23 @@ const WEAPONS = {
       spawnPart(p.x, p.y, '#6a3aca', 0.6);
     }
   },
-  eclats:{
-    name:'Éclats d\'Argent Noir', icn:'🜊', desc:'Gerbe de projectiles dispersés.',
+  tempete:{
+    name:'Tempête de Sang', icn:'🩸', desc:'Explosion de gouttelettes vampiriques dans toutes les directions — chaque impact draine de la vie.',
     maxLevel:6,
-    cooldown(w){ return 1.5 / (1+0.06*w.level) / State.pas.atkSpeedMult; },
+    cooldown(w){ return 1.6 / (1+0.06*w.level) / State.pas.atkSpeedMult; },
     fire(w){
-      const count = 5 + w.level + State.pas.projBonus;
-      const dmg = (5 + w.level*3) * State.pas.dmgMult;
+      const count = 6 + w.level + State.pas.projBonus;
+      const dmg = (6 + w.level*3.5) * State.pas.dmgMult;
       for(let i=0;i<count;i++){
         const ang = rand(0,TAU);
         spawnProj({
           x:State.player.x, y:State.player.y,
-          vx:Math.cos(ang)*500, vy:Math.sin(ang)*500,
-          dmg, pierce:State.pas.pierce, life:0.7, color:'#c9c6d8', trail:'#5a5870', r:4, kind:'eclat'
+          vx:Math.cos(ang)*490, vy:Math.sin(ang)*490,
+          dmg, pierce:State.pas.pierce, life:0.75,
+          color:'#cc2244', trail:'#660a22', r:5, kind:'tempete'
         });
       }
-      AUD.blip(700,0.12,'square',0.07,-300);
+      AUD.blip(380, 0.14, 'sawtooth', 0.09, -220);
     }
   },
   // EVOLUTIONS (unlocked via evolveCheck)
@@ -1362,35 +1379,65 @@ const WEAPONS = {
       addShake(5);
     }
   },
-  lance:{ isEvo:true, base:'rayon', name:'Lance d\'Abysse', icn:'🝐',
-    desc:'Rayons multiples, cooldown bref.',
-    cooldown(){ return 0.9 / State.pas.atkSpeedMult; },
+  moisson:{ isEvo:true, base:'faux', name:'Moisson Maudite', icn:'⚰',
+    desc:'Trois faux en éventail à cadence élevée — moisson infernale.',
+    cooldown(){ return 0.75 / State.pas.atkSpeedMult; },
     fire(){
-      const targets = strongestEnemies(State.player, 800, 3);
-      for(const t of targets){
-        State.beams.push({
-          fromX:State.player.x, fromY:State.player.y,
-          toX:t.x, toY:t.y, target:t,
-          life:0.5, maxLife:0.5,
-          dmg: 80 * State.pas.dmgMult,
-          width:10, color:'#b0e8ff', kind:'rayon'
-        });
+      const t = nearestEnemy(State.player, 800);
+      const baseAng = t ? Math.atan2(t.y-State.player.y, t.x-State.player.x) : (State.player.angle||0);
+      const radius = 210 * State.pas.areaMult;
+      const arcSpan = Math.PI * 0.55;
+      const dmg = 70 * State.pas.dmgMult;
+      for(let a=-1;a<=1;a++){
+        const ang = baseAng + a*(Math.PI*0.30);
+        for(const e of State.enemies){
+          if(e.dead) continue;
+          const ex=e.x-State.player.x, ey=e.y-State.player.y;
+          if(Math.hypot(ex,ey) > radius+e.r) continue;
+          let df=Math.atan2(ey,ex)-ang;
+          while(df>Math.PI) df-=Math.PI*2; while(df<-Math.PI) df+=Math.PI*2;
+          if(Math.abs(df) <= arcSpan/2) damageEnemy(e, dmg, e.x, e.y, 'faux');
+        }
+        for(let i=0;i<4;i++){
+          const pa=ang+rand(-arcSpan/2,arcSpan/2), pd=rand(radius*0.4,radius);
+          spawnPart(State.player.x+Math.cos(pa)*pd, State.player.y+Math.sin(pa)*pd, '#b060ff', 0.4, rand(-20,20), rand(-20,20));
+        }
       }
-      AUD.blip(2200,0.22,'sawtooth',0.1,-1200);
+      if(State.combos.pacte) State.fauxTimer = 2.0;
+      addShake(5);
+      AUD.blip(220, 0.20, 'sawtooth', 0.16, -160);
     }
   },
-  cercle:{ isEvo:true, base:'sceau', name:'Cercle Profane', icn:'🝰',
-    desc:'Grand sceau permanent qui suit l\'élite.',
-    cooldown(){ return 0.6; },
+  voile:{ isEvo:true, base:'brume', name:'Voile de Mort', icn:'💀',
+    desc:'Brume mortelle permanente qui suit le joueur — ralentit et tue.',
+    cooldown(){ return 0.5; },
     fire(){
-      // Always maintain one "follower" zone at the player.
       if(!State.player._profane){
-        State.player._profane = { x:0, y:0, r:150*State.pas.areaMult, life:999999, tick:0,
-          dmg:24*State.pas.dmgMult, color:'#b66aff', kind:'sceau', follow:true };
+        State.player._profane = { x:0, y:0, r:180*State.pas.areaMult, life:999999, tick:0,
+          dmg:20*State.pas.dmgMult, color:'#3a1a5a', kind:'brume', follow:true };
         State.zones.push(State.player._profane);
       }
       State.player._profane.x = State.player.x;
       State.player._profane.y = State.player.y;
+    }
+  },
+  deluge:{ isEvo:true, base:'tempete', name:'Déluge Carmin', icn:'🌊',
+    desc:'Torrent de sang vampirique — portée doublée, vol de vie massif.',
+    cooldown(){ return 0.9 / State.pas.atkSpeedMult; },
+    fire(){
+      const count = 18 + State.pas.projBonus;
+      const dmg = 48 * State.pas.dmgMult;
+      for(let i=0;i<count;i++){
+        const ang = rand(0,TAU);
+        spawnProj({
+          x:State.player.x, y:State.player.y,
+          vx:Math.cos(ang)*620, vy:Math.sin(ang)*620,
+          dmg, pierce:State.pas.pierce+1, life:1.0,
+          color:'#ff2244', trail:'#880018', r:6, kind:'tempete'
+        });
+      }
+      addShake(5);
+      AUD.blip(320, 0.20, 'sawtooth', 0.14, -200);
     }
   },
 };
@@ -1400,8 +1447,9 @@ const EVO_RECIPES = [
   ['arsenal','pistolets','crit',   0.35],
   ['danse',  'lames',    'atkSpd', 5],
   ['maree',  'onde',     'area',   4],
-  ['lance',  'rayon',    'cd',     4],
-  ['cercle', 'sceau',    'area',   4],
+  ['moisson','faux',     'atkSpd', 4],
+  ['voile',  'brume',    'area',   4],
+  ['deluge', 'tempete',  'lifestl',3],
 ];
 
 /* ---- SIGNATURES — arbres de skills propres à chaque perso ----
@@ -1528,9 +1576,9 @@ const MILESTONES = {
 ------------------------------------ */
 const COMBOS = {
   salve: {
-    name:'Salve Crépusculaire', icn:'🜺',
-    desc:'Un tir de pistolet sur 4 déclenche un mini-faisceau perforant.',
-    req:['pistolets','rayon'], minLevel:3
+    name:'Salve Funèbre', icn:'🜺',
+    desc:'Un tir de pistolet sur 4 déclenche un coup de faux spectrale en arc.',
+    req:['pistolets','faux'], minLevel:3
   },
   vortex: {
     name:'Vortex Sanguin', icn:'🜻',
@@ -1538,24 +1586,24 @@ const COMBOS = {
     req:['lames','onde'], minLevel:3
   },
   rosace: {
-    name:'Rosace Profane', icn:'🝓',
-    desc:'Chaque sceau tire 8 éclats en étoile à son apparition.',
-    req:['sceau','eclats'], minLevel:3
+    name:'Déluge Cramoisi', icn:'🝓',
+    desc:'Chaque brume tire 8 gouttes de sang en étoile à son apparition.',
+    req:['brume','tempete'], minLevel:3
   },
   pacte: {
-    name:'Pacte Glacial', icn:'🜾',
-    desc:'Pendant un rayon, les lames tournent 2× plus vite.',
-    req:['rayon','lames'], minLevel:3
+    name:'Pacte Mortel', icn:'🜾',
+    desc:'Chaque coup de faux accélère les lames orbitantes pendant 2s.',
+    req:['faux','lames'], minLevel:3
   },
   fusillade: {
-    name:'Fusillade d\'Obsidienne', icn:'🝏',
-    desc:'Chaque tir de pistolet éclate en 3 fragments à l\'impact.',
-    req:['pistolets','eclats'], minLevel:3
+    name:'Fusillade Sanglante', icn:'🝏',
+    desc:'Chaque tir de pistolet éclate en 3 gouttes de sang à l\'impact.',
+    req:['pistolets','tempete'], minLevel:3
   },
   maelstrom: {
     name:'Maelström Abyssal', icn:'🝕',
-    desc:'Chaque onde laisse un sceau pulsant pendant 2s à son apogée.',
-    req:['onde','sceau'], minLevel:3
+    desc:'Chaque onde laisse un nuage de brume pulsant à son apogée.',
+    req:['onde','brume'], minLevel:3
   }
 };
 
@@ -2113,6 +2161,10 @@ function damageEnemy(e, amount, fx, fy, src='proj'){
   if(State.pas.lifesteal>0){
     State.player.hp = Math.min(State.player.maxHp, State.player.hp + dmg*State.pas.lifesteal);
   }
+  // Tempête de Sang : vol de vie intégré 3% par coup
+  if(src==='tempete'){
+    State.player.hp = Math.min(State.player.maxHp, State.player.hp + dmg*0.03);
+  }
   if(e.hp<=0){
     killEnemy(e);
   }
@@ -2416,8 +2468,8 @@ function applyUpgrade(o){
     if(idx>=0){
       State.weapons[idx] = { id:o.evoKey, level:1, cdLeft:0, evo:true };
     }
-    // Clear profane zone cache if cercle replaces sceau (for fresh state)
-    if(o.evoKey==='cercle' && State.player._profane){
+    // Clear profane zone cache si voile remplace brume (fresh state)
+    if(o.evoKey==='voile' && State.player._profane){
       const z = State.player._profane;
       const zi = State.zones.indexOf(z);
       if(zi>=0) State.zones.splice(zi,1);
@@ -5890,7 +5942,7 @@ function updateProjectiles(dt){
             life:0.22, maxLife:0.22, dmg:p.dmg*0.30*State.pas.dmgMult, color:'#ffd070' });
           for(let _i=0;_i<3;_i++) spawnPart(p.x, p.y, '#ffb030', 0.3, rand(-70,70), rand(-70,70));
         }
-        // COMBO · Fusillade d'Obsidienne : 3 fragments à l'impact (une seule fois par projectile)
+        // COMBO · Fusillade Sanglante : 3 gouttes de sang à l'impact
         if(p.kind==='pistol' && State.combos.fusillade && !p.fusilladeSpent){
           p.fusilladeSpent = true;
           for(let i=0;i<3;i++){
@@ -5898,8 +5950,8 @@ function updateProjectiles(dt){
             spawnProj({
               x:p.x, y:p.y,
               vx:Math.cos(ang)*320, vy:Math.sin(ang)*320,
-              dmg:9*State.pas.dmgMult, pierce:0, life:0.35,
-              color:'#c9c6d8', trail:'#5a5870', r:3, kind:'eclat'
+              dmg:10*State.pas.dmgMult, pierce:0, life:0.38,
+              color:'#cc2244', trail:'#660a22', r:4, kind:'tempete'
             });
           }
         }
@@ -5965,12 +6017,12 @@ function updateProjectiles(dt){
     }
     if(w.life<=0){
       w.dead = true;
-      // COMBO · Maelström Abyssal : sceau pulsant à l'apogée de l'onde
+      // COMBO · Maelström Abyssal : nuage de brume à l'apogée de l'onde
       if(w.spawnSeal){
         State.zones.push({
           x:w.x, y:w.y, r:w.spawnSeal.r,
           life:2.0, tick:0, dmg:w.spawnSeal.dmg,
-          color:'#b66aff', kind:'sceau'
+          color:w.spawnSeal.color||'#5a2a6a', kind:w.spawnSeal.kind||'brume'
         });
       }
     }
@@ -6515,6 +6567,8 @@ function loop(ts){
     updatePlayer(dt);
     updateEnemies(dt);
     updateFamiliars(dt);
+    // Combo Pacte Mortel — timer de boost de lames après faux
+    if(State.fauxTimer > 0) State.fauxTimer -= dt;
     // Jalon Deathborne lvl 50 — Tourelle du Néant
     if(State.pas.milTurret && State.turret){
       const tr = State.turret;
@@ -6653,7 +6707,7 @@ function resetRun(){
   State.shadowShards=0; State.bossKillsRun=0;
   State.revenantUsed=false; State.dashStock=undefined;
   State.milestoneDone={}; State.milestoneQueue=[];
-  State.turret=null; State.clone=null; State.warCryCd=undefined;
+  State.turret=null; State.clone=null; State.warCryCd=undefined; State.fauxTimer=0;
   State.weapons = [{ id: CHARS[State.char].starter, level:1, cdLeft:0.2 }];
   State.passCounts = {};
   State.bloodlust = 0; State.blMode = 0;
