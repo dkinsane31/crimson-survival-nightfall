@@ -619,7 +619,8 @@ const PNG_TARGET_H = {
   enemy_hybride:95,   enemy_ombre:80,
   boss_alpha:220, boss_matriarche:220, boss_gardien:220,
   boss_seigneur:220, boss_reine:220,
-  fam_goule:80, fam_chauvesouris:55, fam_golem:100, fam_corbeau:55
+  fam_goule:80, fam_chauvesouris:55, fam_golem:100, fam_corbeau:55,
+  fam_loup:85, fam_revenant:80
 };
 
 // Dessine un sprite PNG avec pivot aux pieds (bas-centre).
@@ -1040,6 +1041,13 @@ const WEAPONS = {
             if(e._bladeCD<=0){
               damageEnemy(e, b.dmg, b.x, b.y, 'lames');
               e._bladeCD = 0.25;
+              // SIG Selene — Lame Explosive : explosion AoE au contact
+              if(State.pas.sigBladeExplosion && (p.bladeExplosionCd||0)<=0){
+                State.waves.push({ x:e.x, y:e.y, r:8, maxR:95*State.pas.areaMult,
+                  life:0.3, maxLife:0.3, dmg:b.dmg*0.65*State.pas.dmgMult, color:'#ff5a40' });
+                for(let i=0;i<5;i++) spawnPart(e.x, e.y, '#ff8040', 0.5, rand(-90,90), rand(-90,90));
+                p.bladeExplosionCd = 0.18;
+              }
               // COMBO · Vortex Sanguin : mini-onde au contact (GCD)
               if(State.combos.vortex && (p.vortexCd||0)<=0){
                 State.waves.push({ x:e.x, y:e.y, r:6, maxR:80*State.pas.areaMult,
@@ -1051,6 +1059,7 @@ const WEAPONS = {
         }
       }
       for(const e of State.enemies){ if(e._bladeCD>0) e._bladeCD -= dt; }
+      if(p.bladeExplosionCd>0) p.bladeExplosionCd -= dt;
     },
     cooldown(){ return 999; },
     fire(){}
@@ -1372,7 +1381,21 @@ const SIGNATURES = {
   necro_rite:  { char:'necro', name:'Rite du Lierre', icn:'◉', desc:'Goules : +35% dégâts.',
     apply:(p)=>{ p.ghoulDmgMult = (p.ghoulDmgMult||1)*1.35; } },
   necro_revenant:{char:'necro', name:'Revenant', icn:'∞', desc:'Revit 1× par run à 40% PV.',
-    apply:(p)=>{ p.sigRevenant = true; } }
+    apply:(p)=>{ p.sigRevenant = true; } },
+  necro_outretombe:{char:'necro', name:'Invocation d\'Outre-Tombe', icn:'💀', desc:'Chaque ennemi tué ressuscite définitivement comme allié (max 8).',
+    apply:(p)=>{ p.sigOutreTombe = true; } },
+
+  // DEATHBORNE — signature supplémentaire
+  dth_ricochet:{ char:'deathborne', name:'Balles Rebondissantes', icn:'⤻', desc:'Chaque balle rebondit vers un 2ème ennemi après le premier impact.',
+    apply:(p)=>{ p.sigRicochet = true; } },
+
+  // SELENE — signature supplémentaire
+  sel_explosion:{ char:'selene', name:'Lame Explosive', icn:'🔥', desc:'Chaque coup de lame déclenche une petite explosion AoE.',
+    apply:(p)=>{ p.sigBladeExplosion = true; } },
+
+  // HYBRIDE — signature supplémentaire
+  hyb_wolfpack:{ char:'hybride', name:'Chef de Meute', icn:'🐺', desc:'Invoque jusqu\'à 5 loups guerriers alliés qui respectent et attaquent avec vous.',
+    apply:(p)=>{ p.wolfPack = true; } }
 };
 function signaturesForChar(key){
   return Object.entries(SIGNATURES).filter(([id,s])=>s.char===key).map(([id])=>id);
@@ -1943,6 +1966,22 @@ function damageEnemy(e, amount, fx, fy, src='proj'){
 
 function killEnemy(e){
   e.dead = true;
+  // SIG Necro — Invocation d'Outre-Tombe : ennemi tué devient allié permanent (max 8)
+  if(State.pas && State.pas.sigOutreTombe && !e.boss){
+    const revenants = State.familiars.filter(f=>!f.dead && f.kind==='revenant').length;
+    if(revenants < 8){
+      State.familiars.push({
+        x:e.x, y:e.y, vx:0, vy:0,
+        r:Math.min(e.r*0.85, 18),
+        hp:e.maxHp*0.5, maxHp:e.maxHp*0.5,
+        dmg:e.dmg*(State.pas.ghoulDmgMult||1)*0.75,
+        spd:190,
+        hitCd:0, angle:0, age:0, dead:false,
+        col:'#0a1428', glow:'#6fb3ff', kind:'revenant'
+      });
+      for(let i=0;i<8;i++) spawnPart(e.x, e.y, '#6fb3ff', 0.6, rand(-80,80), rand(-80,80));
+    }
+  }
   State.kills++;
   // Kill combo : incrémente et rafraîchit la fenêtre
   State.killCombo.count++;
@@ -5083,6 +5122,70 @@ const ISOSPR = {
     // Mâchoire béante
     ctx.fillStyle='#0a0205';
     ctx.beginPath(); ctx.ellipse(0, -r*1.55, r*0.15, r*0.08, 0, 0, TAU); ctx.fill();
+  },
+
+  loup(ctx, f){
+    const r = f.r;
+    ctx.fillStyle='rgba(0,0,0,0.5)';
+    ctx.beginPath(); ctx.ellipse(0, 0, r*1.1, r*0.38, 0, 0, TAU); ctx.fill();
+    // Pattes
+    ctx.fillStyle='#1a1218'; ctx.strokeStyle='#5a2a30'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(-r*0.28,-r*0.2, r*0.2, r*0.38, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse( r*0.28,-r*0.2, r*0.2, r*0.38, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    // Corps
+    ctx.fillStyle='#1a1218'; ctx.strokeStyle='#5a2a30';
+    ctx.beginPath();
+    ctx.moveTo(-r*0.7,-r*0.4);
+    ctx.quadraticCurveTo(-r*0.9,-r*1.0,-r*0.4,-r*1.4);
+    ctx.lineTo(r*0.4,-r*1.4);
+    ctx.quadraticCurveTo(r*0.9,-r*1.0,r*0.7,-r*0.4);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // Tête
+    ctx.fillStyle='#150e10'; ctx.strokeStyle='#5a1a20'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.ellipse(0,-r*1.65, r*0.32, r*0.28, 0, 0, TAU); ctx.fill(); ctx.stroke();
+    // Museau
+    ctx.fillStyle='#0a0508';
+    ctx.beginPath(); ctx.moveTo(-r*0.12,-r*1.5); ctx.lineTo(0,-r*1.35); ctx.lineTo(r*0.12,-r*1.5); ctx.closePath(); ctx.fill();
+    // Oreilles
+    ctx.fillStyle='#0a0508';
+    ctx.beginPath(); ctx.moveTo(-r*0.22,-r*1.85); ctx.lineTo(-r*0.38,-r*2.12); ctx.lineTo(-r*0.08,-r*1.8); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo( r*0.22,-r*1.85); ctx.lineTo( r*0.38,-r*2.12); ctx.lineTo( r*0.08,-r*1.8); ctx.closePath(); ctx.fill();
+    // Yeux ambrés (alliés, différents des ennemis rouges)
+    ctx.fillStyle='#ff9040'; ctx.shadowBlur=8; ctx.shadowColor='#ff7020';
+    ctx.beginPath(); ctx.arc(-r*0.12,-r*1.68,1.4,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc( r*0.12,-r*1.68,1.4,0,TAU); ctx.fill();
+    ctx.shadowBlur=0;
+  },
+
+  revenant(ctx, f){
+    const r = f.r;
+    const t = State.time*3 + f.age*2;
+    ctx.fillStyle='rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, 0, r*0.9, r*0.3, 0, 0, TAU); ctx.fill();
+    // Corps semi-transparent (silhouette de l'ennemi ressuscité)
+    ctx.save();
+    ctx.globalAlpha = 0.65;
+    ctx.fillStyle='#0a1428'; ctx.strokeStyle='#2a4a6a'; ctx.lineWidth=1.2;
+    ctx.beginPath();
+    ctx.moveTo(-r*0.6,-r*0.2);
+    ctx.quadraticCurveTo(-r*0.8,-r*1.1,-r*0.3,-r*1.6);
+    ctx.lineTo(r*0.3,-r*1.6);
+    ctx.quadraticCurveTo(r*0.8,-r*1.1,r*0.6,-r*0.2);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    // Chaînes spectrales
+    ctx.strokeStyle='rgba(111,179,255,0.3)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(-r*0.5,-r*0.8); ctx.lineTo(-r*0.8,-r*0.2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo( r*0.5,-r*0.8); ctx.lineTo( r*0.8,-r*0.2); ctx.stroke();
+    // Tête
+    ctx.fillStyle='#080e18';
+    ctx.beginPath(); ctx.ellipse(0,-r*1.8, r*0.28, r*0.25, 0, 0, TAU); ctx.fill();
+    // Yeux cyan (mort-vivant allié)
+    const pulse = 0.7 + Math.sin(t)*0.3;
+    ctx.fillStyle=`rgba(111,179,255,${pulse})`; ctx.shadowBlur=10; ctx.shadowColor='#6fb3ff';
+    ctx.beginPath(); ctx.arc(-r*0.1,-r*1.8,1.3,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc( r*0.1,-r*1.8,1.3,0,TAU); ctx.fill();
+    ctx.shadowBlur=0;
   }
 };
 
@@ -5202,6 +5305,7 @@ function drawFamiliarIso(f){
   let famStyle = 'humanoid';
   if(f.kind === 'chauvesouris' || f.kind === 'corbeau') famStyle = 'flying';
   else if(f.kind === 'golem') famStyle = 'heavy';
+  else if(f.kind === 'revenant') famStyle = 'flying';
   const anim = animOffset(f, famStyle);
   ctx.translate(s.x, s.y + anim.bob);
   ctx.rotate(anim.tilt);
@@ -5515,7 +5619,26 @@ function updateProjectiles(dt){
             });
           }
         }
-        if(p.pierce<=0){ p.dead = true; break; }
+        if(p.pierce<=0){
+          // SIG Deathborne — Balles Rebondissantes
+          if(State.pas.sigRicochet && !p.ricochetDone){
+            p.ricochetDone = true;
+            let next=null, bd=Infinity;
+            for(const en of State.enemies){
+              if(en.dead || p.hits.has(en)) continue;
+              const dd = len(p.x-en.x, p.y-en.y);
+              if(dd<450 && dd<bd){ next=en; bd=dd; }
+            }
+            if(next){
+              const ra = Math.atan2(next.y-p.y, next.x-p.x);
+              const sp = Math.hypot(p.vx,p.vy);
+              p.vx = Math.cos(ra)*sp; p.vy = Math.sin(ra)*sp;
+              p.life = p.age + 0.8;
+              break;
+            }
+          }
+          p.dead = true; break;
+        }
         p.pierce--;
       }
     }
@@ -5916,19 +6039,51 @@ function updateFamiliars(dt){
         f.hitCd = 0.3;
         spawnPart(f.x, f.y, '#ff7ac0', 0.4);
       }
+    } else if(f.kind==='loup'){
+      // Loup guerrier : charge rapide, mêlée agressive
+      f.vx = lerp(f.vx, ux*f.spd, 0.18);
+      f.vy = lerp(f.vy, uy*f.spd, 0.18);
+      f.x += f.vx*dt; f.y += f.vy*dt;
+      if(target && f.hitCd<=0 && len(target.x-f.x, target.y-f.y) < target.r + f.r){
+        damageEnemy(target, f.dmg, f.x, f.y, 'loup');
+        f.hitCd = 0.35;
+        spawnPart(f.x, f.y, '#ff7020', 0.5);
+      }
     } else {
-      // goule (par défaut) : mêlée équilibrée
+      // goule / revenant (par défaut) : mêlée équilibrée
       f.vx = lerp(f.vx, ux*f.spd, 0.12);
       f.vy = lerp(f.vy, uy*f.spd, 0.12);
       f.x += f.vx*dt; f.y += f.vy*dt;
       if(target && f.hitCd<=0 && len(target.x-f.x, target.y-f.y) < target.r + f.r){
-        damageEnemy(target, f.dmg, f.x, f.y, 'goule');
-        f.hitCd = 0.45;
-        spawnPart(f.x, f.y, '#9b6bff', 0.5);
+        const kind = f.kind==='revenant' ? 'revenant' : 'goule';
+        damageEnemy(target, f.dmg, f.x, f.y, kind);
+        f.hitCd = f.kind==='revenant' ? 0.5 : 0.45;
+        spawnPart(f.x, f.y, f.kind==='revenant' ? '#6fb3ff' : '#9b6bff', 0.5);
       }
     }
   }
   State.familiars = State.familiars.filter(f=>!f.dead);
+
+  // Chef de Meute (Hybride) — respawn des loups jusqu'à 5 max
+  if(State.pas && State.pas.wolfPack){
+    State.wolfSpawnCd = (State.wolfSpawnCd||0) - dt;
+    const wolves = State.familiars.filter(f=>!f.dead && f.kind==='loup').length;
+    if(wolves < 5 && State.wolfSpawnCd <= 0){
+      const pw = State.player;
+      const wa = rand(0, TAU);
+      State.familiars.push({
+        x:pw.x + Math.cos(wa)*50, y:pw.y + Math.sin(wa)*50,
+        vx:0, vy:0, r:12,
+        hp:60+State.level*8, maxHp:60+State.level*8,
+        dmg:(18+State.level*4)*(State.pas.dmgMult||1),
+        spd:220,
+        hitCd:0, angle:0, age:0, dead:false,
+        col:'#1a1218', glow:'#ff7020', kind:'loup'
+      });
+      State.wolfSpawnCd = wolves===0 ? 0.3 : 3.5;
+      spawnPart(pw.x, pw.y, '#ff7020', 0.6);
+    }
+  }
 }
 
 function drawFamiliars(){
