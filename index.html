@@ -1182,7 +1182,7 @@ const WEAPONS = {
   },
   goule:{
     name:'Invocation : Goule', icn:'🜔', desc:'Invoque un familier qui attaque au contact.',
-    maxLevel:6,
+    char:'necro', maxLevel:6,
     cooldown(){ return 2.0; }, // re-vérifie/entretient les familiers
     fire(w){
       // SIG necro — Horde Maudite : +2 goules max
@@ -1211,7 +1211,7 @@ const WEAPONS = {
   chauvesouris:{
     name:'Essaim de Chauves-souris', icn:'🦇',
     desc:'Essaim rapide qui déchire les ennemis en mêlée.',
-    maxLevel:6,
+    char:'necro', maxLevel:6,
     cooldown(){ return 1.8; },
     fire(w){
       const wanted = 2 + Math.floor(w.level/1.5);
@@ -1234,7 +1234,7 @@ const WEAPONS = {
   golem:{
     name:'Golem d\'Ombre', icn:'🜹',
     desc:'Gardien lent qui pulse des ondes noires AoE.',
-    maxLevel:6,
+    char:'necro', maxLevel:6,
     cooldown(){ return 3.2; },
     fire(w){
       const wanted = 1 + Math.floor((w.level-1)/2);
@@ -1260,7 +1260,7 @@ const WEAPONS = {
   corbeau:{
     name:'Corbeau Nécrotique', icn:'🜾',
     desc:'Oiseau d\'ombre qui tire des projectiles à distance.',
-    maxLevel:6,
+    char:'necro', maxLevel:6,
     cooldown(){ return 2.5; },
     fire(w){
       const wanted = 1 + Math.floor(w.level/2);
@@ -2256,11 +2256,12 @@ function possibleUpgrades(){
         icn:def.icn, w:6 });
     }
   }
-  // 2. New weapon
+  // 2. New weapon (filtrée par perso : les armes avec .char ne sont proposées qu'à ce perso)
   if(State.weapons.length < 6){
     for(const id in WEAPONS){
       const def = WEAPONS[id];
       if(def.isEvo) continue;
+      if(def.char && def.char !== State.char) continue;
       if(State.weapons.find(x=>x.id===id)) continue;
       out.push({ kind:'newWeapon', id, label:def.name, desc:def.desc, icn:def.icn, w:3 });
     }
