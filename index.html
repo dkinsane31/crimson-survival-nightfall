@@ -655,19 +655,13 @@ const ASSET_MANIFEST = [
   { id:'fam_revenant_north-west', path:'assets/sprites/familiars/revenant/rotations/north-west.png' },
   { id:'fam_revenant_south-east', path:'assets/sprites/familiars/revenant/rotations/south-east.png' },
   { id:'fam_revenant_south-west', path:'assets/sprites/familiars/revenant/rotations/south-west.png' },
-  // Tuiles (3 variantes par map pour alternance)
-  { id:'tile_crypte_1',     path:'assets/sprites/tiles/crypte_1.png' },
-  { id:'tile_crypte_2',     path:'assets/sprites/tiles/crypte_2.png' },
-  { id:'tile_crypte_3',     path:'assets/sprites/tiles/crypte_3.png' },
-  { id:'tile_cath_1',       path:'assets/sprites/tiles/cath_1.png' },
-  { id:'tile_cath_2',       path:'assets/sprites/tiles/cath_2.png' },
-  { id:'tile_cath_3',       path:'assets/sprites/tiles/cath_3.png' },
-  { id:'tile_labo_1',       path:'assets/sprites/tiles/labo_1.png' },
-  { id:'tile_labo_2',       path:'assets/sprites/tiles/labo_2.png' },
-  { id:'tile_labo_3',       path:'assets/sprites/tiles/labo_3.png' },
-  { id:'tile_cim_1',        path:'assets/sprites/tiles/cim_1.png' },
-  { id:'tile_cim_2',        path:'assets/sprites/tiles/cim_2.png' },
-  { id:'tile_cim_3',        path:'assets/sprites/tiles/cim_3.png' }
+  // Tilesets (sprite-sheet unique par map, grille de tuiles 32×32)
+  { id:'tile_crypte',     path:'assets/sprites/tiles/Crypte/crypte.png' },
+  { id:'tile_cathedrale', path:'assets/sprites/tiles/Cathedrale/cath.png' },
+  { id:'tile_labo',       path:'assets/sprites/tiles/Labo/labo.png' },
+  { id:'tile_cimetiere',  path:'assets/sprites/tiles/Cimetiere/cim.png' },
+  { id:'tile_palais',     path:'assets/sprites/tiles/Palais/palais.png' },
+  { id:'tile_nexus',      path:'assets/sprites/tiles/Nexus/nexus.png' }
 ];
 
 // Hauteur cible à l'écran par entité. Le ratio largeur est conservé.
@@ -2624,18 +2618,18 @@ function drawEnv(){
   const ex = Math.ceil((cam.x + rangeX*0.6) / TILE) * TILE;
   const ey = Math.ceil((cam.y + rangeY*0.6) / TILE) * TILE;
 
-  // Détermine si des PNG de tuiles sont dispos pour cette map
-  const tilePrefix = State.map === 'crypte' ? 'tile_crypte_'
-                   : State.map === 'cathedrale' ? 'tile_cath_'
-                   : State.map === 'labo' ? 'tile_labo_'
-                   : 'tile_cim_';
-  const tileVariants = [
-    ASSETS.get(tilePrefix+'1'),
-    ASSETS.get(tilePrefix+'2'),
-    ASSETS.get(tilePrefix+'3')
-  ].filter(Boolean);
-  const usePNGTiles = tileVariants.length > 0;
-  if(usePNGTiles) ctx.imageSmoothingEnabled = false;
+  // Sprite-sheet de tuiles pour cette map (une image PNG, grille de tuiles 32×32)
+  const tileSheet = ASSETS.get('tile_' + State.map);
+  const usePNGTiles = !!tileSheet;
+  const halfW = TILE * ISO.sx;
+  const halfH = TILE * ISO.sy;
+  let tsC = 1, tsR = 1, tsTotal = 1;
+  if(usePNGTiles){
+    ctx.imageSmoothingEnabled = false;
+    tsC = Math.max(1, (tileSheet.naturalWidth  / 32) | 0);
+    tsR = Math.max(1, (tileSheet.naturalHeight / 32) | 0);
+    tsTotal = tsC * tsR;
+  }
 
   for(let wy=oy; wy<=ey; wy+=TILE){
     for(let wx=ox; wx<=ex; wx+=TILE){
@@ -2645,23 +2639,29 @@ function drawEnv(){
       const cx = (wx/TILE)|0, cy = (wy/TILE)|0;
 
       if(usePNGTiles){
-        // Variation pseudo-aléatoire reproductible basée sur les coords
-        const variantIdx = ((cx*73 + cy*37) & 3) % tileVariants.length;
-        const img = tileVariants[variantIdx];
-        // Taille du diamant à l'écran
-        const w = TILE * ISO.sx * 2;
-        const h = TILE * ISO.sy * 2;
-        ctx.drawImage(img, p.x - w/2, p.y - h/2, w, h);
+        // Sélection pseudo-aléatoire reproductible d'une tuile dans la grille
+        const tIdx = ((cx*73 + cy*37) & 0xFFFF) % tsTotal;
+        const srcX = (tIdx % tsC) * 32;
+        const srcY = ((tIdx / tsC) | 0) * 32;
+        // Clip au diamant isométrique pour masquer les coins du carré source
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(p.x,          p.y - halfH);
+        ctx.lineTo(p.x + halfW,  p.y);
+        ctx.lineTo(p.x,          p.y + halfH);
+        ctx.lineTo(p.x - halfW,  p.y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(tileSheet, srcX, srcY, 32, 32, p.x - halfW, p.y - halfH, halfW*2, halfH*2);
+        ctx.restore();
       } else {
         // Fallback : diamant vectoriel
         const even = ((cx+cy) & 1) === 0;
-        const halfW = TILE * ISO.sx;
-        const halfH = TILE * ISO.sy;
         ctx.beginPath();
-        ctx.moveTo(p.x,         p.y - halfH);
-        ctx.lineTo(p.x + halfW, p.y);
-        ctx.lineTo(p.x,         p.y + halfH);
-        ctx.lineTo(p.x - halfW, p.y);
+        ctx.moveTo(p.x,          p.y - halfH);
+        ctx.lineTo(p.x + halfW,  p.y);
+        ctx.lineTo(p.x,          p.y + halfH);
+        ctx.lineTo(p.x - halfW,  p.y);
         ctx.closePath();
         ctx.fillStyle = even ? map.bg.c1 : map.bg.c2;
         ctx.fill();
