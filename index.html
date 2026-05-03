@@ -5161,8 +5161,8 @@ function drawEnemyIso(e){
   ctx.scale(anim.squashX, anim.squashY);
   const baseId = e.boss ? ('boss_' + e.bossDef.id) : ('enemy_' + e.kind);
   const h = PNG_TARGET_H[baseId] || 100;
-  // Essaie le sprite directionnel (basé sur l'angle de déplacement vers le joueur)
-  const eDir = getCharDir(Math.cos(e.angle||0), Math.sin(e.angle||0));
+  // Sprite directionnel basé sur la vélocité réelle (vx/vy >> 10 donc le seuil passe)
+  const eDir = getCharDir(e.vx||0, e.vy||0);
   if(!drawPNGSprite(baseId + '_' + eDir, h) && !drawPNGSprite(baseId, h)){
     ctx.scale(ISO.spriteScale, ISO.spriteScale);
     const drawer = e.boss
