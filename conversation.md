@@ -545,3 +545,43 @@ Prochaine grande étape : les tuiles de sol (12 PNG) ou les animations de marche
 - Loups Alphas : ×1.6 au lieu de ×2.0 (moins abusé)
 - Jalons se déclenchent APRÈS les écrans de level-up
 - Milestone screen masqué dans `startGame`
+
+### Sprites loup + revenant intégrés
+- `fam_loup` ✓ — 8 directions, commit 89fe51c
+- `fam_revenant` ✓ — 8 directions, commit 63ccff8
+
+---
+
+## Session 2026-05-04 — Système tileset sprite-sheet
+
+### Clarification tileset vs map
+L'utilisateur utilise PixelLab pour générer des **tilesets** (grilles de tuiles 32×32 dans un PNG unique) et non des maps complètes. Les tilesets servent de source pour le rendu procédural du sol.
+
+### Refonte rendu tuiles (commit c37c613)
+**Ancien système** : 3 PNG distincts par map (`crypte_1.png`, `crypte_2.png`, `crypte_3.png`) — 12 entrées ASSET_MANIFEST.
+
+**Nouveau système** :
+- 1 sprite-sheet PNG par map (grille de tuiles 32×32)
+- 6 entrées ASSET_MANIFEST : `tile_crypte`, `tile_cathedrale`, `tile_labo`, `tile_cimetiere`, `tile_palais`, `tile_nexus`
+- Chemin : `assets/sprites/tiles/NomMap/nom.png`
+- Le code calcule automatiquement la grille à partir des dimensions du PNG (`naturalWidth / 32`)
+- Sélection pseudo-aléatoire reproductible : `((cx*73 + cy*37) & 0xFFFF) % totalTiles`
+- **Diamond clipping** : `ctx.save() → clip() → drawImage() → ctx.restore()` pour masquer les coins carrés
+
+### Premier tileset livré
+- Crypte : `assets/sprites/tiles/Crypte/crypte.png` (25 Ko, tileset généré sur PixelLab — pierre sombre + flaques cyan)
+
+### Workflow retenu
+Pour chaque nouvelle map, générer un tileset sur PixelLab (32×32 tiles) et sauvegarder dans un sous-dossier :
+```
+assets/sprites/tiles/
+  Crypte/crypte.png         ✓
+  Cathedrale/cath.png       → pierres orangées, vitraux brisés
+  Labo/labo.png             → métal gris, grilles, vapeur
+  Cimetiere/cim.png         → terre sombre, herbe morte
+  Palais/palais.png         → marbre rouge, or corrompu (futur)
+  Nexus/nexus.png           → vide cosmique, cristaux violets (futur)
+```
+
+### Push automatique retenu
+L'utilisateur teste sur mobile via GitHub Pages. Désormais commit + push systématique après chaque modification, sans attendre la demande explicite.
