@@ -1029,7 +1029,7 @@ const BOSS_DEF = [
 const WEAPONS = {
   pistolets:{
     name:'Pistolets Nocturnes', icn:'🜋', desc:'Tirs rapides sur la cible la plus proche.',
-    maxLevel:6,
+    char:'deathborne', maxLevel:6,
     cooldown(w){ return 0.55 / (1+0.09*w.level) / State.pas.atkSpeedMult; },
     fire(w){
       const t = nearestEnemy(State.player, 640);
@@ -1073,7 +1073,7 @@ const WEAPONS = {
   },
   lames:{
     name:'Lames Orbitantes', icn:'🜛', desc:'Lames tournantes autour de l\'élite.',
-    maxLevel:6,
+    char:'selene', maxLevel:6,
     onUpdate(w, dt){
       const p = State.player;
       const n = 2 + Math.floor(w.level/1.5);
@@ -1124,7 +1124,7 @@ const WEAPONS = {
   },
   onde:{
     name:'Onde Sanguine', icn:'🜄', desc:'Pulsation circulaire repoussante.',
-    maxLevel:6,
+    char:'hybride', maxLevel:6,
     cooldown(w){ return 3.2 / (1+0.05*w.level) / State.pas.atkSpeedMult; },
     fire(w){
       const radius = (150 + w.level*40) * State.pas.areaMult;
@@ -1711,6 +1711,8 @@ function resetJoy(){
 }
 window.addEventListener('touchstart', (e)=>{
   if(State.phase!=='playing') return;
+  // Laisser les boutons UI et overlays recevoir leurs clics normalement
+  if(e.target.closest('button, .overlay, #gameTopbar, a')) return;
   e.preventDefault();
   for(const t of e.changedTouches){
     // Zone joystick : tout sauf le quart droit (dash button)
@@ -1726,6 +1728,7 @@ window.addEventListener('touchstart', (e)=>{
 },{passive:false});
 window.addEventListener('touchmove', (e)=>{
   if(State.phase!=='playing') return;
+  if(e.target.closest('button, .overlay, #gameTopbar, a')) return;
   e.preventDefault();
   for(const t of e.changedTouches){
     if(t.identifier===joyId){
@@ -2360,9 +2363,8 @@ function openLevelUp(){
     let cls = 'up';
     if(o.kind==='newWeapon') cls += ' new';
     if(o.kind==='weaponLvl') cls += ' weapon';
-    if(o.kind==='evo' || o.kind==='combo') cls += ' evo';
+    if(o.kind==='evo' || o.kind==='combo' || o.kind==='signature') cls += ' evo';
     d.className = cls;
-    if(o.kind==='signature') cls += ' evo';
     const tag = o.kind==='evo' ? 'ÉVOLUTION'
               : o.kind==='combo' ? 'SYNERGIE'
               : o.kind==='signature' ? 'SIGNATURE '+CHARS[State.char].name
