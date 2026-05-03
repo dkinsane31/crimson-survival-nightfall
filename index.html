@@ -230,6 +230,35 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
   .stats-grid{font-size:10px;gap:3px 12px;margin:6px auto 8px;max-width:100%}
 }
 
+/* ===== ÉCRAN JALON (milestone) ===== */
+#milestoneScreen{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 35%,rgba(90,0,15,.97),rgba(10,0,3,.99));
+  backdrop-filter:blur(10px);pointer-events:auto;z-index:30;
+}
+.ms-card{
+  max-width:540px;width:90%;padding:36px 32px;
+  border:2px solid #8a0a1a;border-radius:4px;text-align:center;
+  box-shadow:0 0 80px rgba(200,0,30,.4),0 0 200px rgba(80,0,15,.3);
+}
+.ms-badge{
+  font-family:"Cinzel",Georgia,serif;font-size:12px;letter-spacing:.3em;
+  color:#ff4455;text-transform:uppercase;margin-bottom:10px;
+}
+.ms-icn{font-size:52px;margin:14px 0 10px;}
+.ms-title{
+  font-family:"Cinzel",Georgia,serif;font-size:26px;color:#fff;
+  text-shadow:0 0 30px rgba(255,42,68,.7);margin-bottom:8px;
+}
+.ms-desc{color:#c08090;font-size:14px;line-height:1.6;margin-bottom:24px;}
+.ms-btn{
+  padding:13px 36px;font-size:14px;letter-spacing:.2em;text-transform:uppercase;
+  background:linear-gradient(180deg,#6a0a1a,#380008);
+  border:1px solid #ff2a44;border-radius:3px;
+  color:#fff;cursor:pointer;font-family:inherit;transition:all .2s;
+}
+.ms-btn:hover{box-shadow:0 0 24px rgba(255,42,68,.5);transform:translateY(-1px);}
+
 /* ===== Encoche (notch/safe area) ===== */
 @supports(padding:max(0px)){
   .hud-top{
@@ -369,6 +398,17 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
         <button class="btn primary" id="btnAgain">Encore une partie</button>
         <button class="btn ghost" id="btnMenu">Menu principal</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Jalon de niveau -->
+  <div id="milestoneScreen">
+    <div class="ms-card">
+      <div class="ms-badge" id="msBadge">JALON — NIVEAU 10</div>
+      <div class="ms-icn" id="msIcn">⚡</div>
+      <h2 class="ms-title" id="msTitle">Pouvoir Débloqué</h2>
+      <div class="ms-desc" id="msDesc">Description du pouvoir.</div>
+      <button class="ms-btn" onclick="closeMilestoneScreen()">CONTINUER</button>
     </div>
   </div>
 
@@ -991,8 +1031,14 @@ const WEAPONS = {
         spawnProj({
           x:State.player.x, y:State.player.y,
           vx:Math.cos(ang)*640, vy:Math.sin(ang)*640,
-          dmg: base, pierce: State.pas.pierce,
-          life:1.2, color:'#9cd0ff', trail:'#4a85d8', r:5, kind:'pistol'
+          dmg: base * (State.pas.milSpiral ? 1.5 : 1),
+          pierce: State.pas.pierce,
+          life:1.2,
+          color: State.pas.milSpiral ? '#7fd0ff' : '#9cd0ff',
+          trail: State.pas.milSpiral ? '#3060a8' : '#4a85d8',
+          r: State.pas.milSpiral ? 6 : 5, kind:'pistol',
+          homing: State.pas.milAutoAim ? 0.07 : 0,
+          spiralRate: State.pas.milSpiral ? (i%2===0 ? 0.033 : -0.033) : 0
         });
       }
       // COMBO · Salve Crépusculaire (1 tir sur 4 devient un mini-faisceau)
@@ -1401,6 +1447,68 @@ function signaturesForChar(key){
   return Object.entries(SIGNATURES).filter(([id,s])=>s.char===key).map(([id])=>id);
 }
 
+/* ============================================================
+   7b. JALONS DE NIVEAU — pouvoirs exclusifs aux niveaux 10/20/50/100
+   ============================================================ */
+const MILESTONES = {
+  deathborne:[
+    { level:10,  name:'Pistolets Fulminants', icn:'💥',
+      desc:'Chaque balle explose à l\'impact : onde de choc en zone autour de la cible.',
+      apply:(p)=>{ p.milExplosiveBullets=true; }},
+    { level:20,  name:'Visée Mortelle',       icn:'🎯',
+      desc:'Tes balles cherchent automatiquement l\'ennemi le plus proche après le tir.',
+      apply:(p)=>{ p.milAutoAim=true; }},
+    { level:50,  name:'Tourelle du Néant',    icn:'🜴',
+      desc:'Une tourelle spectrale t\'orbite et tire indépendamment toutes les 0.9s.',
+      apply:(p)=>{ p.milTurret=true; }},
+    { level:100, name:'Spirale d\'Extinction', icn:'∞',
+      desc:'Tes balles vrillent en spirale dévastatrice (+50% dégâts, trajectoire hélicoïdale).',
+      apply:(p)=>{ p.milSpiral=true; }},
+  ],
+  selene:[
+    { level:10,  name:'Instinct Fantôme',  icn:'👁',
+      desc:'+22% de chance d\'esquiver automatiquement toute attaque ennemie.',
+      apply:(p)=>{ p.dodgeChance=(p.dodgeChance||0)+0.22; }},
+    { level:20,  name:'Ombre Portée',      icn:'🌑',
+      desc:'Cooldown du dash réduit de 40%.',
+      apply:(p)=>{ p.dashCdMult=(p.dashCdMult||1)*0.60; }},
+    { level:50,  name:'Zone Critique',     icn:'⚡',
+      desc:'Chaque coup critique déclenche une onde AoE autour de la cible.',
+      apply:(p)=>{ p.milCritZone=true; }},
+    { level:100, name:'Dédoublement',      icn:'👤',
+      desc:'Séléné se dédouble. Le clone possède tes aptitudes et tire en miroir (65% dégâts).',
+      apply:(p)=>{ p.milClone=true; }},
+  ],
+  hybride:[
+    { level:10,  name:'Armure Bestiale',  icn:'🛡',
+      desc:'Carapace naturelle : dégâts reçus réduits de 12% supplémentaires.',
+      apply:(p)=>{ p.armor*=0.88; }},
+    { level:20,  name:'Cri de Guerre',    icn:'📣',
+      desc:'Toutes les 8s, un rugissement étourdit les ennemis dans un rayon de 300.',
+      apply:(p)=>{ p.milWarCry=true; }},
+    { level:50,  name:'Mutation Sauvage', icn:'🐗',
+      desc:'Sous 50% de PV : tes dégâts sont multipliés par 1.5.',
+      apply:(p)=>{ p.milMutation=true; }},
+    { level:100, name:'Loups Alphas',     icn:'🐺',
+      desc:'Tes loups de meute deviennent des alphas : plus grands, plus rapides, dégâts doublés.',
+      apply:(p)=>{ p.milAlphaWolves=true; }},
+  ],
+  necro:[
+    { level:10,  name:'Marche des Morts',       icn:'💀',
+      desc:'Tes goules se déplacent 40% plus vite et infligent +20% de dégâts.',
+      apply:(p)=>{ p.ghoulSpdMult=(p.ghoulSpdMult||1)*1.40; p.ghoulDmgMult=(p.ghoulDmgMult||1)*1.20; }},
+    { level:20,  name:'Tribunal des Ombres',     icn:'🦇',
+      desc:'Une chauve-souris vampirique rejoint définitivement ta horde.',
+      apply:(p)=>{ p.milChauveSouris=true; }},
+    { level:50,  name:'Colosse d\'Obsidienne',   icn:'🗿',
+      desc:'Un golem d\'obsidienne rejoint définitivement ta horde.',
+      apply:(p)=>{ p.milGolem=true; }},
+    { level:100, name:'Seigneur des Corbeaux',   icn:'🐦',
+      desc:'Un corbeau nécromantique rejoint définitivement ta horde.',
+      apply:(p)=>{ p.milCorbeau=true; }},
+  ],
+};
+
 /* ---- COMBOS / SYNERGIES ----
    Paires d'armes qui, une fois toutes deux au niveau requis, débloquent
    un sort hybride proposé en carte rouge au level up. Effet persistant,
@@ -1641,6 +1749,18 @@ function spawnProj(p){
   p.age = 0;
   p.hits = new Set();
   State.projectiles.push(p);
+  // Jalon Selene lvl 100 — Dédoublement : tir miroir depuis le clone
+  if(State.pas && State.pas.milClone && !p.fromClone && p.kind !== 'enemy' && p.kind !== 'corbeau_shot'){
+    const pa = State.player.angle || 0;
+    const q = Object.assign({}, p, {
+      x: State.player.x + Math.cos(pa + 1.571) * 75,
+      y: State.player.y + Math.sin(pa + 1.571) * 75,
+      dmg: p.dmg * 0.65,
+      hits: new Set(), age: 0, fromClone: true,
+      color: '#a8d8ff', trail: '#4a88c8'
+    });
+    State.projectiles.push(q);
+  }
 }
 function spawnEnemyProj(p){
   p.age = 0;
@@ -1896,6 +2016,13 @@ function recomputePassives(){
     const sd = SIGNATURES[sid]; if(!sd || !sd.apply) continue;
     sd.apply(pas);
   }
+  // Jalons de niveau débloqués
+  const _msKey = State.char;
+  if(MILESTONES[_msKey]){
+    for(const m of MILESTONES[_msKey]){
+      if((State.milestoneDone||{})[_msKey+'_'+m.level]) m.apply(pas);
+    }
+  }
   // Clamp hp
   State.player.maxHp = pas.maxHp;
   State.player.hp = Math.min(State.player.hp, pas.maxHp);
@@ -1904,6 +2031,11 @@ function recomputePassives(){
 
 function damagePlayer(amount){
   if(State.iframes>0) return;
+  // Jalon Selene lvl 10 — Instinct Fantôme : esquive passive
+  if(State.pas.dodgeChance && Math.random() < State.pas.dodgeChance){
+    spawnFloat(State.player.x, State.player.y-18, 'ESQUIVE', '#9cd0ff');
+    return;
+  }
   const dmg = amount * State.pas.armor;
   State.player.hp -= dmg;
   flash('#ff2a44', 0.12); addShake(3);
@@ -1937,9 +2069,16 @@ function damageEnemy(e, amount, fx, fy, src='proj'){
   if(State.pas.sigBeast && State.player.hp < State.player.maxHp*0.4){
     dmg *= 1.35;
   }
+  // Jalon Hybride lvl 50 — Mutation Sauvage : ×1.5 sous 50% PV
+  if(State.pas.milMutation && State.player.hp < State.player.maxHp*0.5) dmg *= 1.5;
   // SIG selene — Saignement Carmin : DoT appliqué sur crit
   if(isCrit && State.pas.sigBleed){
     e.bleed = { time:3, dps: amount * 0.35 };
+  }
+  // Jalon Selene lvl 50 — Zone Critique : onde AoE sur crit
+  if(isCrit && State.pas.milCritZone){
+    State.waves.push({ x:e.x, y:e.y, r:8, maxR:80*State.pas.areaMult,
+      life:0.26, maxLife:0.26, dmg:amount*0.30*State.pas.dmgMult, color:'#ff60a0' });
   }
   e.hp -= dmg;
   e.hit = 0.12;
@@ -2077,6 +2216,7 @@ function grantXp(amount){
     State.level++;
     State.xpNeed = xpForLevel(State.level);
     levels++;
+    checkMilestone(State.level);
   }
   if(levels>0){
     // Queue les level ups : si plusieurs gagnés dans le même tick on enchaîne
@@ -2276,8 +2416,95 @@ function applyUpgrade(o){
   updateLoadoutUi();
   if(State.lvupQueue>0){
     setTimeout(openLevelUp, 80);
+  } else if((State.milestoneQueue||[]).length > 0){
+    const mNext = State.milestoneQueue.shift();
+    setTimeout(()=>openMilestoneScreen(mNext), 80);
   } else {
     State.phase = 'playing'; State.running = true;
+  }
+}
+
+/* ============================================================
+   13b. JALONS — fonctions d'ouverture / fermeture / application
+   ============================================================ */
+function checkMilestone(level){
+  const ms = MILESTONES[State.char];
+  if(!ms) return;
+  for(const m of ms){
+    if(m.level === level){
+      const tag = State.char+'_'+level;
+      if(!(State.milestoneDone||{})[tag]){
+        if(!State.milestoneQueue) State.milestoneQueue = [];
+        State.milestoneQueue.push(Object.assign({}, m, { charKey:State.char, tag }));
+      }
+    }
+  }
+}
+
+function openMilestoneScreen(m){
+  State.phase = 'milestone';
+  State.running = false;
+  document.getElementById('levelUp').style.display = 'none';
+  document.getElementById('msBadge').textContent = 'JALON — NIVEAU ' + m.level;
+  document.getElementById('msIcn').textContent = m.icn;
+  document.getElementById('msTitle').textContent = m.name;
+  document.getElementById('msDesc').textContent = m.desc;
+  document.getElementById('milestoneScreen').style.display = 'flex';
+  if(!State.milestoneDone) State.milestoneDone = {};
+  State.milestoneDone[m.tag] = true;
+  recomputePassives();
+  applyMilestoneEffect(m);
+  flash('#6a0a1a', 0.7); addShake(12);
+  AUD.evo();
+  showBanner('JALON', m.name, 2.0, 'evo');
+}
+
+function closeMilestoneScreen(){
+  document.getElementById('milestoneScreen').style.display = 'none';
+  if((State.milestoneQueue||[]).length > 0){
+    const next = State.milestoneQueue.shift();
+    setTimeout(()=>openMilestoneScreen(next), 120);
+  } else if((State.lvupQueue||0) > 0){
+    setTimeout(openLevelUp, 80);
+  } else {
+    State.phase = 'playing'; State.running = true;
+  }
+}
+
+function applyMilestoneEffect(m){
+  const key = m.charKey;
+  // Necro — invocations permanentes
+  if(key === 'necro'){
+    if(m.level === 20 && !State.familiars.find(f=>f.kind==='chauvesouris')){
+      const a = rand(0, TAU);
+      State.familiars.push({ x:State.player.x+Math.cos(a)*60, y:State.player.y+Math.sin(a)*60,
+        vx:0, vy:0, r:10, hp:50+State.level*6, maxHp:50+State.level*6,
+        dmg:(14+State.level*3)*(State.pas.dmgMult||1), spd:240,
+        hitCd:0, angle:0, age:0, dead:false, col:'#1a1220', glow:'#ff7ac0', kind:'chauvesouris' });
+    }
+    if(m.level === 50 && !State.familiars.find(f=>f.kind==='golem')){
+      const a = rand(0, TAU);
+      State.familiars.push({ x:State.player.x+Math.cos(a)*60, y:State.player.y+Math.sin(a)*60,
+        vx:0, vy:0, r:16, hp:180+State.level*20, maxHp:180+State.level*20,
+        dmg:(30+State.level*8)*(State.pas.dmgMult||1), spd:80,
+        pulseDmg:(35+State.level*10)*(State.pas.dmgMult||1), pulseCd:2.8,
+        hitCd:0, angle:0, age:0, dead:false, col:'#2a1a4a', glow:'#9b6bff', kind:'golem' });
+    }
+    if(m.level === 100 && !State.familiars.find(f=>f.kind==='corbeau')){
+      const a = rand(0, TAU);
+      State.familiars.push({ x:State.player.x+Math.cos(a)*80, y:State.player.y+Math.sin(a)*80,
+        vx:0, vy:0, r:9, hp:60+State.level*8, maxHp:60+State.level*8,
+        dmg:(20+State.level*5)*(State.pas.dmgMult||1), spd:200,
+        shotCd:0, hitCd:0, angle:0, age:0, dead:false, col:'#0a0810', glow:'#b48aff', kind:'corbeau' });
+    }
+  }
+  // Deathborne — tourelle
+  if(key === 'deathborne' && m.level === 50 && !State.turret){
+    State.turret = { angle:0, cd:0.5, orbitRadius:72 };
+  }
+  // Selene — clone
+  if(key === 'selene' && m.level === 100 && !State.clone){
+    State.clone = { x:State.player.x+60, y:State.player.y };
   }
 }
 
@@ -2298,7 +2525,7 @@ function tryDash(){
   State.dashVy = dy * (CFG.DASH.distance/CFG.DASH.time);
   State.dashTime = CFG.DASH.time;
   State.dashStock--;
-  if(State.dashCd<=0) State.dashCd = CFG.DASH.cooldown;
+  if(State.dashCd<=0) State.dashCd = CFG.DASH.cooldown * (State.pas.dashCdMult||1);
   State.iframes = CFG.DASH.iFrames;
   AUD.dash();
   for(let i=0;i<10;i++) spawnPart(State.player.x, State.player.y, '#9cd0ff', 0.4, -dx*rand(40,120), -dy*rand(40,120));
@@ -5347,6 +5574,30 @@ function drawBladesIso(){
   }
 }
 
+/* Tourelle du Néant (Deathborne lvl 50) */
+function drawTurret(){
+  if(!State.pas.milTurret || !State.turret) return;
+  const tr = State.turret;
+  const wx = State.player.x + Math.cos(tr.angle) * tr.orbitRadius;
+  const wy = State.player.y + Math.sin(tr.angle) * tr.orbitRadius;
+  const s = worldToScreen(wx, wy, 0);
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  ctx.rotate(tr.angle);
+  ctx.shadowBlur = 12; ctx.shadowColor = '#ffd090';
+  ctx.fillStyle = '#1a1218';
+  ctx.strokeStyle = '#ffd090';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, 7, 0, TAU); ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, 0); ctx.lineTo(13, 0);
+  ctx.strokeStyle = '#ffb050'; ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
 /* ============================================================
    18. ENEMIES UPDATE / RENDER
    ============================================================ */
@@ -5598,6 +5849,12 @@ function updateProjectiles(dt){
       }
     }
     p.x += p.vx*dt; p.y += p.vy*dt;
+    // Jalon Deathborne lvl 100 — Spirale d'Extinction
+    if(p.spiralRate){
+      const cs = Math.cos(p.spiralRate), sn = Math.sin(p.spiralRate);
+      const nvx = p.vx*cs - p.vy*sn, nvy = p.vx*sn + p.vy*cs;
+      p.vx = nvx; p.vy = nvy;
+    }
 
     // hit test
     for(const e of State.enemies){
@@ -5606,6 +5863,12 @@ function updateProjectiles(dt){
       if(len(e.x-p.x, e.y-p.y) < e.r + p.r){
         damageEnemy(e, p.dmg * State.pas.dmgMult, p.x, p.y, p);
         p.hits.add(e);
+        // Jalon Deathborne lvl 10 — Pistolets Fulminants : explosion AoE
+        if((p.kind==='pistol'||p.kind==='arsenal') && State.pas.milExplosiveBullets){
+          State.waves.push({ x:p.x, y:p.y, r:6, maxR:60*State.pas.areaMult,
+            life:0.22, maxLife:0.22, dmg:p.dmg*0.30*State.pas.dmgMult, color:'#ffd070' });
+          for(let _i=0;_i<3;_i++) spawnPart(p.x, p.y, '#ffb030', 0.3, rand(-70,70), rand(-70,70));
+        }
         // COMBO · Fusillade d'Obsidienne : 3 fragments à l'impact (une seule fois par projectile)
         if(p.kind==='pistol' && State.combos.fusillade && !p.fusilladeSpent){
           p.fusilladeSpent = true;
@@ -6039,6 +6302,17 @@ function updateFamiliars(dt){
         f.hitCd = 0.3;
         spawnPart(f.x, f.y, '#ff7ac0', 0.4);
       }
+    } else if(f.kind==='loup' && State.pas.milAlphaWolves){
+      // Loups Alphas — version améliorée
+      const alphaSpd = f.spd * 1.35;
+      f.vx = lerp(f.vx, ux*alphaSpd, 0.22);
+      f.vy = lerp(f.vy, uy*alphaSpd, 0.22);
+      f.x += f.vx*dt; f.y += f.vy*dt;
+      if(target && f.hitCd<=0 && len(target.x-f.x, target.y-f.y) < target.r + f.r + 4){
+        damageEnemy(target, f.dmg * 2.0, f.x, f.y, 'loup');
+        f.hitCd = 0.30;
+        for(let _i=0;_i<3;_i++) spawnPart(f.x, f.y, '#ff8030', 0.5, rand(-80,80), rand(-80,80));
+      }
     } else if(f.kind==='loup'){
       // Loup guerrier : charge rapide, mêlée agressive
       f.vx = lerp(f.vx, ux*f.spd, 0.18);
@@ -6051,8 +6325,9 @@ function updateFamiliars(dt){
       }
     } else {
       // goule / revenant (par défaut) : mêlée équilibrée
-      f.vx = lerp(f.vx, ux*f.spd, 0.12);
-      f.vy = lerp(f.vy, uy*f.spd, 0.12);
+      const gouleSpd = (f.kind==='goule' || f.kind==='revenant') ? f.spd*(State.pas.ghoulSpdMult||1) : f.spd;
+      f.vx = lerp(f.vx, ux*gouleSpd, 0.12);
+      f.vy = lerp(f.vy, uy*gouleSpd, 0.12);
       f.x += f.vx*dt; f.y += f.vy*dt;
       if(target && f.hitCd<=0 && len(target.x-f.x, target.y-f.y) < target.r + f.r){
         const kind = f.kind==='revenant' ? 'revenant' : 'goule';
@@ -6071,14 +6346,15 @@ function updateFamiliars(dt){
     if(wolves < 5 && State.wolfSpawnCd <= 0){
       const pw = State.player;
       const wa = rand(0, TAU);
+      const isAlpha = !!(State.pas.milAlphaWolves);
       State.familiars.push({
         x:pw.x + Math.cos(wa)*50, y:pw.y + Math.sin(wa)*50,
-        vx:0, vy:0, r:12,
-        hp:60+State.level*8, maxHp:60+State.level*8,
-        dmg:(18+State.level*4)*(State.pas.dmgMult||1),
-        spd:220,
+        vx:0, vy:0, r: isAlpha ? 16 : 12,
+        hp: (isAlpha?120:60)+State.level*8, maxHp:(isAlpha?120:60)+State.level*8,
+        dmg:(isAlpha?24:18+State.level*4)*(State.pas.dmgMult||1),
+        spd: isAlpha ? 260 : 220,
         hitCd:0, angle:0, age:0, dead:false,
-        col:'#1a1218', glow:'#ff7020', kind:'loup'
+        col:'#1a1218', glow: isAlpha ? '#ff9040' : '#ff7020', kind:'loup'
       });
       State.wolfSpawnCd = wolves===0 ? 0.3 : 3.5;
       spawnPart(pw.x, pw.y, '#ff7020', 0.6);
@@ -6217,6 +6493,40 @@ function loop(ts){
     updatePlayer(dt);
     updateEnemies(dt);
     updateFamiliars(dt);
+    // Jalon Deathborne lvl 50 — Tourelle du Néant
+    if(State.pas.milTurret && State.turret){
+      const tr = State.turret;
+      tr.angle += 1.8 * dt;
+      tr.cd -= dt;
+      if(tr.cd <= 0){
+        tr.cd = 0.9;
+        const tx = State.player.x + Math.cos(tr.angle) * tr.orbitRadius;
+        const ty = State.player.y + Math.sin(tr.angle) * tr.orbitRadius;
+        const ta = nearestEnemy({x:tx, y:ty}, 580);
+        if(ta){
+          const a = Math.atan2(ta.y-ty, ta.x-tx);
+          spawnProj({ x:tx, y:ty, vx:Math.cos(a)*560, vy:Math.sin(a)*560,
+            dmg:(14+State.level*3)*State.pas.dmgMult, pierce:State.pas.pierce,
+            life:1.2, color:'#ffd090', trail:'#a07020', r:4, kind:'turret', fromClone:true });
+        }
+      }
+    }
+    // Jalon Hybride lvl 20 — Cri de Guerre
+    if(State.pas.milWarCry){
+      if(State.warCryCd === undefined) State.warCryCd = 8;
+      State.warCryCd -= dt;
+      if(State.warCryCd <= 0){
+        State.warCryCd = 8;
+        for(const e of State.enemies){
+          if(!e.dead && len(e.x-State.player.x, e.y-State.player.y) < 300)
+            e.stagger = Math.max(e.stagger||0, 1.8);
+        }
+        State.waves.push({ x:State.player.x, y:State.player.y, r:10, maxR:300,
+          life:0.45, maxLife:0.45, dmg:0, color:'#ffd060' });
+        for(let i=0;i<10;i++) spawnPart(State.player.x, State.player.y,'#ffd060',0.7,rand(-120,120),rand(-120,120));
+        showBanner('CRI DE GUERRE', '', 0.7);
+      }
+    }
     updateWeapons(dt);
     updateProjectiles(dt);
     updateParts(dt);
@@ -6254,6 +6564,7 @@ function render(rawDt){
     // Pipeline iso : props + entités triés par profondeur monde, puis FX au-dessus
     drawSortedWorld();
     drawBladesIso();
+    drawTurret();
     drawFx();
   }
   ctx.restore();
@@ -6319,6 +6630,8 @@ function resetRun(){
   State.keyHorde=null; State.keyHordeTimer=70;
   State.shadowShards=0; State.bossKillsRun=0;
   State.revenantUsed=false; State.dashStock=undefined;
+  State.milestoneDone={}; State.milestoneQueue=[];
+  State.turret=null; State.clone=null; State.warCryCd=undefined;
   State.weapons = [{ id: CHARS[State.char].starter, level:1, cdLeft:0.2 }];
   State.passCounts = {};
   State.bloodlust = 0; State.blMode = 0;
@@ -6342,6 +6655,7 @@ function startGame(){
   document.getElementById('charScreen').style.display='none';
   document.getElementById('over').style.display='none';
   document.getElementById('levelUp').style.display='none';
+  document.getElementById('milestoneScreen').style.display='none';
   document.getElementById('hud').style.display='block';
   document.getElementById('gameTopbar').style.display='flex';
   showMobileControls(isMobile());
