@@ -681,3 +681,45 @@ Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pou
 - `bladeExplosionCd` undefined au 1er tick : `undefined > 0` est `false`, le guard empêche tout problème → comportement correct
 
 **Fichiers touchés** : `index.html` (3 corrections dans drawFx/render/resetRun)
+
+---
+
+## Session 2026-05-04 (suite — contexte compressé)
+
+### Scaling par map + variété anti-répétition
+
+**User** : "il faut que entre chaque maps le joueurs xp plus rapidement car, on a poussé les compétences jusqu'au lvl 100 mais que les monstres soient aussi plus fort"
+**User** : "solution A ok, solution B il faut réelement que ca soit alératoire meme en recommencant le meme niveau, solution C ok"
+
+**Livraison (commit 120a6c4)** :
+
+**1. Scaling par map (xpMult + enemyMult)**
+- Ajout de `xpMult` et `enemyMult` dans chaque entrée de `MAPS`
+  - crypte : ×1.0 / ×1.0 (équilibré)
+  - cathedrale : ×1.25 XP / ×1.20 ennemis
+  - labo : ×1.55 / ×1.40
+  - cimetiere : ×1.85 / ×1.65
+  - palais : ×2.2 / ×1.90
+  - nexus : ×2.6 / ×2.20
+- `grantXp()` multiplie l'XP reçue par `State.mapDef.xpMult`
+- `spawnEnemyAt()` multiplie HP, DMG et légèrement SPD par `mapDef.enemyMult`
+
+**2. Vagues nocturnes (Solution A) — NIGHT_WAVES**
+- 4 vagues fixes déclenchées à 2min / 4min / 6min / 8min
+- Chaque vague spawn un burst d'ennemis ciblés avec bannière + flash
+- Stockées dans `State.nightWavesDone` (Set), aucune répétition dans le même run
+
+**3. Événements aléatoires (Solution B) — RANDOM_EVENTS**
+- 4 événements : Frénésie (+70% vitesse ennemis), Obscurité (tunnel vision), Pacte Maudit (×1.6 dégâts infligés/×1.4 dégâts reçus), Pluie de Sang (orbes XP du ciel)
+- `triggerRandomEvent()` tire un événement au hasard (Math.random() pur, différent à chaque run)
+- Déclenché toutes les 85-140s après 60s de jeu, jamais pendant un boss
+- Effet "Obscurité" : overlay radial sombre autour du joueur pendant 18s
+
+**4. Reliques au sol (Solution C) — RELIC_DEFS**
+- 3 reliques : Crâne de Fureur (+60% dégâts 30s), Gant de Hâte (+35% vitesse 25s), Bouclier Spectral (invulnérable 8s)
+- 8% de chance de drop sur tout ennemi non-boss
+- Ramassage automatique par proximité (36px)
+- `drawRelics()` affiche des triangles pulsants en espace monde
+- Indicateur de buff actif affiché en bas-gauche
+
+**Fichiers touchés** : `index.html` (MAPS, grantXp, spawnEnemyAt, doSpawn, triggerRandomEvent, updateRandomEvent, updateRelics, drawRelics, damageEnemy, damagePlayer, updatePlayer, updateEnemies, render, resetRun)
