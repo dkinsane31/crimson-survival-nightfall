@@ -870,3 +870,21 @@ Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pou
 **Fichiers touchés** : `index.html` (+336 lignes nettes, 8214 lignes total)
 
 **User** : "parle français" → confirmé, réponses en français désormais.
+
+---
+
+## Session 2026-05-04 (suite) — Correction affichage malédictions (commit 0bca2e3)
+
+**User** : "pour les malédictions, il faudrait expliquer les malus"
+
+**Problème** : les boutons de sélection de malédictions n'affichaient que le nom et le % d'éclats bonus — le joueur ne voyait pas clairement le handicap avant d'activer.
+
+**Fix** : redesign du bouton `.curse-btn` pour afficher 4 informations distinctes :
+1. Icône (grande, centrée)
+2. Nom de la malédiction (blanc)
+3. **Malus en rouge** — extrait automatiquement du champ `desc` (partie avant ` · `)
+4. Bonus d'éclats en or
+
+Exemples affichés : `-30% PV max`, `Ennemis +60% vitesse`, `Chaque kill coûte 3 PV`, `×2 taux de spawn`, etc.
+
+**Fichiers touchés** : `index.html` (CSS `.curse-btn` + fonction `buildCursePanel`)
