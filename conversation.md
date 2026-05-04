@@ -786,3 +786,22 @@ Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pou
 **HUD :** affichage de l'or en bas à droite (🪙 X)
 
 **Fichiers touchés** : `index.html` (SHOP_ITEMS, openShop, closeShop, buyShopItem, initMapRelics, updateRelics, drawRelics, killEnemy, damagePlayer, recomputePassives, resetRun, startGame, updateHud, btnCloseShop event listener)
+
+---
+
+## Session 2026-05-04 (suite) — Serments de Sang (commit ecd84c9)
+
+**User** : demande d'un système de pactes permanents, liés à chaque personnage, proposés après le boss final
+
+**24 serments implémentés (6 par perso) :**
+
+- DEATHBORNE : Serment du Canon (+1 proj ×3), du Tireur (+6% crit ×3), de l'Écho (+30% dégâts ricochet ×2), de la Tourelle (+25% cadence ×2), Explosif (chaîne explosion 15%), ULTIME Mort Certaine (4% instakill <30% PV)
+- SELENE : Serment du Sang Vif (+3 PV/crit ×3), de l'Ombre (+1 dash ×2), Carmin (+1s saignement +20% dps ×2), du Fantôme (+8% esquive ×2), du Miroir (+15% clone dmg ×3), ULTIME Lame Absolue (5e attaque = crit ×3)
+- HYBRIDE : Serment de la Bête (+25 PV ×4), de la Horde (+1 loup ×3), de Pierre (-5% dmg reçus ×3), du Prédateur (+6% vitesse sous 40% PV ×2), Tonnant (war cry repousse +1s stun), ULTIME Alpha Dominant (loups créent onde AoE à chaque frappe)
+- NÉCROMANCIEN : Serment de la Horde Noire (+2 alliés max ×3), de l'Ombre Affamée (+15% dmg horde ×3), du Rite Sombre (boss final → revenant d'élite), de l'Essence Noire (+0.4% dmg/kill horde ×2), du Revenant (+1 résurrection ×2), ULTIME Le Maître Absolu (+4 alliés max + soin 2 PV/kill horde)
+
+**Flux** : boss final tué → `openSermentChoice()` (au lieu de `openPactChoice`). 3 serments proposés au hasard (ultime visible seulement après 3 serments obtenus sur ce perso). Sauvegardé dans `SAVE.data.serments[charId]`.
+
+**Effets hookés dans** : damageEnemy (lameAbsolue, critHeal, bleedMods, essenceNoire, hordeHeal, instakill), updatePlayer (predateurSpdBonus), turret loop (tourelleSpdMult), ricochet (ricDmgMult), war cry (warCryExtended + knockback), clone (cloneDmgBonus), wolf max (wolfMaxBonus), wolf attack (wolfCopyWave), damagePlayer (extraRevenantCharges), killEnemy (sigBossRevive), explosion AoE (chainExplosion)
+
+**Fichiers touchés** : `index.html`
