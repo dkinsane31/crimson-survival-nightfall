@@ -938,6 +938,29 @@ const KEY_NIGHTS = {
     dur:18, tint:'#1a0a2a', spawnMult:0.5, xpMult:1.4,  dmgMult:1.0, enemySpdMult:1.0, eliteOnly:true }
 };
 
+/* ---- VAGUES NOCTURNES — déclenchées à des minutes précises ---- */
+const NIGHT_WAVES = [
+  { at:120, name:'HORDE',         sub:'une marée de chair',      count:18, kinds:['traqueur','traqueur','ombre'] },
+  { at:240, name:'ASSAUT BRUTAL', sub:'les brutes arrivent',     count:12, kinds:['brute','hybride','hybride'] },
+  { at:360, name:'NUÉE RAPIDE',   sub:'trop nombreux pour fuir', count:22, kinds:['traqueur','ombre','tireur'] },
+  { at:480, name:'VAGUE FINALE',  sub:'le chaos absolu',         count:20, kinds:['brute','hybride','tireur','ombre'] }
+];
+
+/* ---- ÉVÉNEMENTS ALÉATOIRES — différents à chaque run ---- */
+const RANDOM_EVENTS = [
+  { id:'frenzy',    name:'FRÉNÉSIE',        sub:'les ombres courent plus vite', dur:20, tint:'#3a0a0a' },
+  { id:'darkness',  name:'OBSCURITÉ',       sub:'la nuit avale la lumière',     dur:18, tint:'#000000' },
+  { id:'pact',      name:'PACTE MAUDIT',    sub:'tu frappes plus fort, tu saignes aussi', dur:22, tint:'#2a1a00' },
+  { id:'bloodrain', name:'PLUIE DE SANG',   sub:'l\'XP coule du ciel',          dur:25, tint:'#4a0a1a' }
+];
+
+/* ---- RELIQUES — objets ramassables sur le sol ---- */
+const RELIC_DEFS = [
+  { id:'fury',  name:'CRÂNE DE FUREUR',  desc:'+60% dégâts (30s)',       dur:30, color:'#ff6030' },
+  { id:'haste', name:'GANT DE HÂTE',     desc:'+35% vitesse (25s)',       dur:25, color:'#60ffb0' },
+  { id:'aegis', name:'BOUCLIER SPECTRAL',desc:'invulnérable 8s (unique)', dur:8,  color:'#60c0ff' }
+];
+
 /* ---- PROPS DE MAP ----
    Décors statiques dessinés en monde, triés par Y pour un rendu en
    fausse profondeur (le joueur passe derrière/devant selon sa position).
@@ -975,7 +998,8 @@ const MAPS = {
     accent:'#6fb3ff',
     mod:null,
     modLabel:'Classique · équilibré',
-    unlockBoss:null
+    unlockBoss:null,
+    xpMult:1.0, enemyMult:1.0
   },
   cathedrale: {
     name:'CATHÉDRALE EN RUINES',
@@ -987,7 +1011,8 @@ const MAPS = {
     accent:'#ff7a44',
     mod:{ dmgMult:1.15 },
     modLabel:'+15% dégâts infligés',
-    unlockBoss:'alpha'
+    unlockBoss:'alpha',
+    xpMult:1.25, enemyMult:1.20
   },
   labo: {
     name:'LABORATOIRE SOUTERRAIN',
@@ -999,7 +1024,8 @@ const MAPS = {
     accent:'#6fe0ff',
     mod:{ atkSpeedMult:1.10 },
     modLabel:'+10% cadence d\'attaque',
-    unlockBoss:'matriarche'
+    unlockBoss:'matriarche',
+    xpMult:1.55, enemyMult:1.40
   },
   cimetiere: {
     name:'CIMETIÈRE ARGENTÉ',
@@ -1011,7 +1037,8 @@ const MAPS = {
     accent:'#cfe0ff',
     mod:{ critBonus:0.08 },
     modLabel:'+8% chance de critique',
-    unlockBoss:'gardien'
+    unlockBoss:'gardien',
+    xpMult:1.85, enemyMult:1.65
   },
   palais: {
     name:'PALAIS DES OMBRES',
@@ -1023,7 +1050,8 @@ const MAPS = {
     accent:'#d9b26a',
     mod:{ speedMult:1.12 },
     modLabel:'+12% vitesse de déplacement',
-    unlockBoss:'seigneur'
+    unlockBoss:'seigneur',
+    xpMult:2.2, enemyMult:1.90
   },
   nexus: {
     name:'NEXUS ABYSSAL',
@@ -1035,7 +1063,8 @@ const MAPS = {
     accent:'#d060ff',
     mod:{ dmgMult:1.20 },
     modLabel:'+20% dégâts infligés',
-    unlockBoss:'reine'
+    unlockBoss:'reine',
+    xpMult:2.6, enemyMult:2.20
   }
 };
 
@@ -1917,18 +1946,19 @@ function spdScale(){ return 1 + State.time*0.0022; }
 function spawnEnemyAt(kind, x, y, opts={}){
   const d = ENEMY_DEF[kind];
   const s = scale();
-  // Mods cumulés : pact sur joueur (enemyHpMult/enemySpdMult) + nuit-clé active
+  // Mods cumulés : pact sur joueur (enemyHpMult/enemySpdMult) + nuit-clé active + map
   const hpMod = (State.pas.enemyHpMult||1) * (State.keyHorde?.def.enemyHpMult||1);
   const spdMod= (State.pas.enemySpdMult||1) * (State.keyHorde?.def.enemySpdMult||1);
   const dmgMod= (State.keyHorde?.def.dmgMult||1);
+  const mapMult = State.mapDef?.enemyMult || 1;
   const e = {
     kind, x, y,
     vx:0, vy:0,
     r: d.r * (opts.elite?1.4:1),
-    hp: d.hp * s * (opts.elite?4:1) * hpMod,
-    maxHp: d.hp * s * (opts.elite?4:1) * hpMod,
-    dmg: d.dmg * (0.9 + s*0.1) * (opts.elite?1.2:1) * dmgMod,
-    spd: d.spd * spdScale() * spdMod,
+    hp: d.hp * s * (opts.elite?4:1) * hpMod * mapMult,
+    maxHp: d.hp * s * (opts.elite?4:1) * hpMod * mapMult,
+    dmg: d.dmg * (0.9 + s*0.1) * (opts.elite?1.2:1) * dmgMod * mapMult,
+    spd: d.spd * spdScale() * spdMod * Math.pow(mapMult, 0.2),
     xp: d.xp * (opts.elite?4:1),
     col: d.col, glow: d.glow,
     ai: d.ai,
@@ -1995,6 +2025,20 @@ function doSpawn(dt){
     }
   }
 
+  // Vagues nocturnes — surgissent à des instants fixes, une seule fois par run
+  for(const nw of NIGHT_WAVES){
+    if(!State.nightWavesDone.has(nw.at) && State.time >= nw.at && !State.bossActive){
+      State.nightWavesDone.add(nw.at);
+      showBanner(nw.name, nw.sub, 2.0, 'boss');
+      flash('#1a0020', 0.5); addShake(12); AUD.boss();
+      for(let i=0; i<nw.count; i++){
+        const kind = nw.kinds[Math.floor(Math.random()*nw.kinds.length)];
+        const pos = randomSpawnPos();
+        spawnEnemyAt(kind, pos.x, pos.y, {});
+      }
+    }
+  }
+
   if(State.bossActive) return;
   State.spawnTimer -= dt;
   if(State.spawnTimer<=0){
@@ -2023,6 +2067,32 @@ function doSpawn(dt){
   // Boss cycle — premier boss un peu plus tardif (2 min 30)
   State.bossTimer -= dt;
   if(State.bossTimer<=0){ spawnBoss(); State.bossTimer = 165 + State.bossIndex*30; }
+}
+
+function triggerRandomEvent(){
+  const def = RANDOM_EVENTS[Math.floor(Math.random()*RANDOM_EVENTS.length)];
+  State.activeEvent = { ...def, timeLeft: def.dur };
+  showBanner(def.name, def.sub, 2.2, 'boss');
+  flash(def.tint, 0.6); addShake(8); AUD.boss();
+  State.nextEventTime = 85 + Math.random()*55;
+}
+
+function updateRandomEvent(dt){
+  if(!State.activeEvent) return;
+  State.activeEvent.timeLeft -= dt;
+  // pluie de sang — fait apparaître des orbes d'XP périodiquement
+  if(State.activeEvent.id === 'bloodrain'){
+    State.eventXpTimer = (State.eventXpTimer||0) - dt;
+    if(State.eventXpTimer <= 0){
+      State.eventXpTimer = 1.8;
+      const p = State.player;
+      State.xpOrbs.push({ x: p.x + rand(-200,200), y: p.y + rand(-200,200), r:7, xp:3 });
+    }
+  }
+  if(State.activeEvent.timeLeft <= 0){
+    State.activeEvent = null;
+    State.eventXpTimer = 0;
+  }
 }
 
 function spawnBoss(){
@@ -2136,7 +2206,9 @@ function damagePlayer(amount){
     spawnFloat(State.player.x, State.player.y-18, 'ESQUIVE', '#9cd0ff');
     return;
   }
-  const dmg = amount * State.pas.armor;
+  let dmg = amount * State.pas.armor;
+  if(State.activeEvent?.id==='pact') dmg *= 1.4;
+  if(State.relicBuff?.id==='aegis') return; // invulnérable pendant l'égide
   State.player.hp -= dmg;
   flash('#ff2a44', 0.12); addShake(3);
   AUD.blip(140,0.08,'square',0.1,-50);
@@ -2165,6 +2237,8 @@ function damageEnemy(e, amount, fx, fy, src='proj'){
   const crMult = State.pas.critMult + (src.critBonus||0);
   let dmg = amount * (isCrit ? crMult : 1);
   if(State.blMode>0) dmg *= 1.6;
+  if(State.activeEvent?.id==='pact') dmg *= 1.6;
+  if(State.relicBuff?.id==='fury') dmg *= 1.6;
   // SIG hybride — Sang Bestial : +35% sous 40% PV
   if(State.pas.sigBeast && State.player.hp < State.player.maxHp*0.4){
     dmg *= 1.35;
@@ -2276,6 +2350,61 @@ function killEnemy(e){
   } else if(e.elite){
     addShake(4); flash('#ffb3ff', 0.18);
   }
+  // Drop de relique — 8% de chance sur un ennemi non-boss
+  if(!e.boss && Math.random() < 0.08){
+    const def = RELIC_DEFS[Math.floor(Math.random()*RELIC_DEFS.length)];
+    State.relics.push({ x:e.x, y:e.y, def, age:0 });
+  }
+}
+
+/* ---- RELIQUES — ramassage et buffs ---- */
+function updateRelics(dt){
+  if(!State.relics || !State.player) return;
+  // Décroissance du buff actif
+  if(State.relicBuff){
+    State.relicBuff.timeLeft -= dt;
+    if(State.relicBuff.timeLeft <= 0) State.relicBuff = null;
+  }
+  const p = State.player;
+  for(let i=State.relics.length-1;i>=0;i--){
+    const r = State.relics[i];
+    r.age += dt;
+    const dist = Math.hypot(r.x-p.x, r.y-p.y);
+    if(dist < 36){
+      State.relicBuff = { id:r.def.id, timeLeft:r.def.dur };
+      showBanner(r.def.name, r.def.desc, 1.6, 'evo');
+      flash('#ffffff', 0.25);
+      State.relics.splice(i, 1);
+    }
+  }
+}
+
+function drawRelics(){
+  if(!State.relics || State.relics.length===0) return;
+  const p = State.player;
+  for(const r of State.relics){
+    const { x:wx, y:wy } = worldToScreen(r.x, r.y);
+    const pulse = 1 + 0.18*Math.sin(r.age*4);
+    ctx.save();
+    ctx.shadowColor = r.def.color;
+    ctx.shadowBlur = 18*pulse;
+    ctx.fillStyle = r.def.color;
+    ctx.globalAlpha = 0.9;
+    const sz = 10*pulse;
+    ctx.beginPath();
+    ctx.moveTo(wx, wy-sz);
+    ctx.lineTo(wx+sz*0.6, wy+sz*0.5);
+    ctx.lineTo(wx-sz*0.6, wy+sz*0.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(r.def.name.slice(0,6), wx, wy+sz+12);
+    ctx.restore();
+  }
 }
 
 /* ---- PACTES — modal de choix après un boss ---- */
@@ -2322,11 +2451,12 @@ function openPactChoice(){
 // XP CURVE — courbe volontairement douce : on veut des level up fréquents
 // surtout dans les 5 premières minutes pour construire un build rapidement.
 function xpForLevel(l){
-  // L1→L2 ≈ 8, L5 ≈ 23, L10 ≈ 50, L20 ≈ 126. Rapide tôt, accélère doucement.
-  return Math.floor(4 + l*3 + Math.pow(l, 1.18));
+  // Courbe étirée : ~level 22 en 10 min sur crypte, plus sur maps dures via xpMult.
+  return Math.floor(6 + l*5 + Math.pow(l, 1.25));
 }
 function grantXp(amount){
-  State.xp += amount;
+  const xpMult = State.mapDef?.xpMult || 1;
+  State.xp += amount * xpMult;
   let levels = 0;
   while(State.xp >= State.xpNeed){
     State.xp -= State.xpNeed;
@@ -2888,6 +3018,7 @@ function updatePlayer(dt){
 
   let speed = State.pas.baseSpeed * State.pas.speedMult;
   if(State.blMode>0) speed *= 1.18;
+  if(State.relicBuff?.id==='haste') speed *= 1.35;
 
   // dash overrides movement while active
   if(State.dashTime>0){
@@ -5761,15 +5892,16 @@ function updateEnemies(dt){
       e.angle += diff * Math.min(1, 8*dt);
     }
 
+    const evtSpdMult = (State.activeEvent?.id==='frenzy') ? 1.7 : 1.0;
     if(e.ai==='chase' || e.ai==='swarm'){
-      const spd = e.spd * (e.stagger>0?0.4:1);
+      const spd = e.spd * evtSpdMult * (e.stagger>0?0.4:1);
       e.vx = lerp(e.vx, ux*spd, 0.15);
       e.vy = lerp(e.vy, uy*spd, 0.15);
     } else if(e.ai==='shoot'){
       // keep distance ~260
       const desired = 260;
       const factor = (d<desired?-1:1);
-      const spd = e.spd * factor * (e.stagger>0?0.4:1);
+      const spd = e.spd * evtSpdMult * factor * (e.stagger>0?0.4:1);
       e.vx = lerp(e.vx, ux*spd, 0.1);
       e.vy = lerp(e.vy, uy*spd, 0.1);
       e.shootCd -= dt;
@@ -6665,6 +6797,14 @@ function loop(ts){
         showBanner('CRI DE GUERRE', '', 0.7);
       }
     }
+    // Événements aléatoires
+    updateRandomEvent(dt);
+    if(!State.bossActive && !State.activeEvent && State.time > 60){
+      State.nextEventTime -= dt;
+      if(State.nextEventTime <= 0) triggerRandomEvent();
+    }
+    // Reliques au sol — ramassage par proximité
+    updateRelics(dt);
     updateWeapons(dt);
     updateProjectiles(dt);
     updateParts(dt);
@@ -6703,6 +6843,7 @@ function render(rawDt){
     drawSortedWorld();
     drawBladesIso();
     drawTurret();
+    drawRelics();
     drawFx();
   }
   ctx.restore();
@@ -6753,6 +6894,34 @@ function render(rawDt){
     ctx.fillRect(0,0,cvs.width,cvs.height);
     ctx.restore();
   }
+
+  // Obscurité — réduit la visibilité à un faisceau autour du joueur
+  if(State.activeEvent?.id==='darkness' && State.player){
+    const s = worldToScreen(State.player.x, State.player.y);
+    const spx = s.x * DPR, spy = s.y * DPR; // logical → canvas pixels
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    const dark = ctx.createRadialGradient(spx, spy, cvs.height*0.12, spx, spy, cvs.height*0.55);
+    dark.addColorStop(0, 'rgba(0,0,0,0)');
+    dark.addColorStop(1, 'rgba(0,0,0,0.88)');
+    ctx.fillStyle = dark;
+    ctx.fillRect(0,0,cvs.width,cvs.height);
+    ctx.restore();
+  }
+
+  // Indicateur de buff de relique
+  if(State.relicBuff && State.phase==='playing'){
+    ctx.save();
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    const rb = State.relicBuff;
+    const def = RELIC_DEFS.find(d=>d.id===rb.id);
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = def?.color || '#ffffff';
+    ctx.textAlign = 'left';
+    const v2 = viewport();
+    ctx.fillText('RELIQUE: ' + (def?.name||rb.id) + '  ' + Math.ceil(rb.timeLeft) + 's', 12, v2.h - 14);
+    ctx.restore();
+  }
 }
 
 /* ============================================================
@@ -6770,6 +6939,9 @@ function resetRun(){
   State.revenantUsed=false; State.dashStock=undefined;
   State.milestoneDone={}; State.milestoneQueue=[];
   State.turret=null; State.clone=null; State.warCryCd=undefined; State.fauxTimer=0; State.wolfSpawnCd=0;
+  State.relics=[]; State.relicBuff=null;
+  State.activeEvent=null; State.nextEventTime=85+Math.random()*55; State.eventXpTimer=0;
+  State.nightWavesDone=new Set();
   State.weapons = [{ id: CHARS[State.char].starter, level:1, cdLeft:0.2 }];
   State.passCounts = {};
   State.bloodlust = 0; State.blMode = 0;
