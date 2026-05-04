@@ -234,6 +234,29 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
   .stats-grid{font-size:10px;gap:3px 12px;margin:6px auto 8px;max-width:100%}
 }
 
+/* ===== BOUTIQUE DU SANG ===== */
+#shopScreen .card{ max-width:720px; }
+.shop-gold-info{ color:var(--gold); font-size:20px; font-family:"Cinzel",Georgia,serif;
+  letter-spacing:.15em; margin:8px 0 4px; }
+.shop-items{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:16px 0; }
+.shop-item{ flex:1; min-width:160px; max-width:200px; padding:14px 12px;
+  border:1px solid rgba(217,178,106,.22); border-radius:4px;
+  background:rgba(10,9,5,.75); cursor:pointer; transition:all .2s; text-align:center; }
+.shop-item:hover{ border-color:var(--gold); transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(217,178,106,.2); }
+.shop-item.cant-afford{ opacity:.4; cursor:not-allowed; }
+.shop-item.cant-afford:hover{ transform:none; box-shadow:none; border-color:rgba(217,178,106,.22); }
+.shop-item .si-icn{ font-size:26px; margin-bottom:6px; }
+.shop-item .si-name{ font-family:"Cinzel",serif; font-size:12px; color:#fff;
+  letter-spacing:.12em; margin-bottom:4px; }
+.shop-item .si-desc{ font-size:11px; color:var(--ink2); line-height:1.5; margin-bottom:8px; }
+.shop-item .si-cost{ color:var(--gold); font-size:13px; font-weight:bold; letter-spacing:.1em; }
+.shop-item .si-cat{ font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:4px; }
+
+/* Or dans le HUD */
+.gold-hud{ color:var(--gold); font-size:13px; letter-spacing:.1em; font-weight:bold; }
+
 /* ===== ÉCRAN JALON (milestone) ===== */
 #milestoneScreen{
   position:absolute;inset:0;display:none;align-items:center;justify-content:center;
@@ -297,6 +320,7 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
         <div class="line" id="scaleLbl">PALIER 1</div>
         <div class="line" id="mapLbl" style="font-size:11px;letter-spacing:.15em;color:var(--cold)"></div>
         <div class="line" id="hordeLbl" style="display:none;color:#ff8ea0;letter-spacing:.18em;font-size:12px"></div>
+        <div class="line gold-hud" id="goldLbl">🪙 0</div>
       </div>
     </div>
     <div class="loadout" id="loadout"></div>
@@ -358,6 +382,18 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
   </div>
 
   <!-- Pact (après chaque boss tué) -->
+  <!-- Boutique du Sang -->
+  <div class="overlay" id="shopScreen" style="display:none">
+    <div class="card">
+      <div class="lu-sub" style="color:var(--gold)">// Marchant de l'Ombre //</div>
+      <div class="lu-title" style="font-size:30px">BOUTIQUE DU SANG</div>
+      <div class="shop-gold-info">🪙 <span id="shopGoldAmt">0</span> or disponible</div>
+      <div style="color:var(--muted);font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px">choisis un item · ou repars avec ton or</div>
+      <div class="shop-items" id="shopList"></div>
+      <button class="btn ghost" id="btnCloseShop" style="margin-top:8px">Passer</button>
+    </div>
+  </div>
+
   <div class="overlay" id="pactScreen" style="display:none">
     <div class="card">
       <div class="lu-sub" style="color:#ff7a95">// Pacte sacrificiel //</div>
@@ -959,6 +995,22 @@ const RELIC_DEFS = [
   { id:'fury',  name:'CRÂNE DE FUREUR',  desc:'+60% dégâts (30s)',       dur:30, color:'#ff6030' },
   { id:'haste', name:'GANT DE HÂTE',     desc:'+35% vitesse (25s)',       dur:25, color:'#60ffb0' },
   { id:'aegis', name:'BOUCLIER SPECTRAL',desc:'invulnérable 8s (unique)', dur:8,  color:'#60c0ff' }
+];
+
+/* ---- BOUTIQUE DU SANG — items disponibles ---- */
+const SHOP_ITEMS = [
+  { id:'fiole_sang',     name:'Fiole de Sang Noir',   desc:'+40% PV max ce run',                    cost:60,  cat:'survie',  icn:'🩸' },
+  { id:'elixir_carmin',  name:'Élixir Carmin',         desc:'Soigne 50% PV instantanément',          cost:45,  cat:'survie',  icn:'💉' },
+  { id:'serment_chair',  name:'Serment de Chair',      desc:'+0.8 PV/s régénération ce run',         cost:50,  cat:'survie',  icn:'❤' },
+  { id:'essence_corr',   name:'Essence Corrompue',     desc:'+20% dégâts ce run',                    cost:80,  cat:'pouvoir', icn:'⚔' },
+  { id:'lame_maudite',   name:'Lame Maudite',          desc:"+15% vitesse d'attaque ce run",         cost:70,  cat:'pouvoir', icn:'🗡' },
+  { id:'cristal_ame',    name:"Cristal d'Âme",         desc:'+1 niveau immédiat',                    cost:100, cat:'pouvoir', icn:'✨' },
+  { id:'bombe_ames',     name:"Bombe à Âmes",          desc:'500 dégâts à tous les ennemis',         cost:90,  cat:'special', icn:'💥' },
+  { id:'pacte_marchand', name:'Pacte du Marchand',     desc:'+30% or gagné ce run',                  cost:55,  cat:'special', icn:'🪙' },
+  { id:'oeil_predateur', name:'Œil du Prédateur',      desc:'Révèle toutes les reliques de la map',  cost:40,  cat:'special', icn:'👁' },
+  { id:'coeur_boss',     name:'Cœur de Boss',          desc:'+1 charge de dash ce run',              cost:130, cat:'rare',    icn:'💎' },
+  { id:'relique_garante',name:'Relique Garantie',      desc:'Offre une relique sol immédiatement',   cost:110, cat:'rare',    icn:'🔮' },
+  { id:'resurrection',   name:'Résurrection',          desc:'Reviens à 30% PV à la prochaine mort',  cost:150, cat:'rare',    icn:'☠' },
 ];
 
 /* ---- PROPS DE MAP ----
@@ -2223,6 +2275,12 @@ function recomputePassives(){
     const pd = PACTS[pactId]; if(!pd || !pd.apply) continue;
     pd.apply(pas);
   }
+  // Buffs de la boutique du sang (achetés avec l'or ce run)
+  const sb = State.shopBuffs || {};
+  if(sb.maxHpMult)    pas.maxHp  *= sb.maxHpMult;
+  if(sb.dmgMult)      pas.dmgMult *= sb.dmgMult;
+  if(sb.atkSpeedMult) pas.atkSpeedMult *= sb.atkSpeedMult;
+  if(sb.extraDash)    pas.dashCharges = (pas.dashCharges||1) + sb.extraDash;
   // Perma-buffs (Sanctum, achetés avec les éclats d'ombre)
   applyPermaBuffs(pas);
   // Signatures exclusives du perso actuel
@@ -2258,6 +2316,15 @@ function damagePlayer(amount){
   AUD.blip(140,0.08,'square',0.1,-50);
   spawnFloat(State.player.x, State.player.y-20, '-'+Math.round(dmg), '#ff8ea0');
   if(State.player.hp <= 0){
+    // Résurrection boutique : revient à 30% PV (se consomme une fois)
+    if(State.shopBuffs?.resurrection && !State.shopBuffs?.resurrectionUsed){
+      State.shopBuffs.resurrectionUsed = true;
+      State.player.hp = State.player.maxHp * 0.30;
+      State.iframes = 2.5;
+      showBanner('RÉSURRECTION', 'la mort t\'a épargné', 2.0, 'evo');
+      flash('#d9b26a', 0.7); addShake(12); slowmo(0.5);
+      return;
+    }
     // SIG necro — Revenant : resurrection unique à 40% PV
     if(State.pas.sigRevenant && !State.revenantUsed){
       State.revenantUsed = true;
@@ -2387,6 +2454,9 @@ function killEnemy(e){
     const healFrac = isFinal ? 0.40 : 0.15;
     State.player.hp = Math.min(State.player.maxHp, State.player.hp + State.player.maxHp*healFrac);
     grantXp(isFinal ? 80 : 20);
+    // Or : mini-boss 20-25, boss final 60-80
+    const goldDrop = isFinal ? (60 + Math.floor(Math.random()*21)) : (20 + Math.floor(Math.random()*6));
+    State.gold = (State.gold||0) + Math.floor(goldDrop * (State.goldMult||1));
     // Déverrouillage de carte : UNIQUEMENT sur le boss final
     if(isFinal){
       const bId = e.bossDef.id;
@@ -2402,10 +2472,19 @@ function killEnemy(e){
         SAVE.save();
       }
     }
-    // Pacte sacrificiel après chaque boss (mini et final)
-    setTimeout(openPactChoice, 700);
+    // Mini-boss → boutique ; boss final → pacte sacrificiel
+    if(isMini) setTimeout(openShop, 700);
+    else        setTimeout(openPactChoice, 700);
   } else if(e.elite){
     addShake(4); flash('#ffb3ff', 0.18);
+    // Or sur élite : 5-8
+    const ge = 5 + Math.floor(Math.random()*4);
+    State.gold = (State.gold||0) + Math.floor(ge * (State.goldMult||1));
+  } else {
+    // Or sur normal : 1-2
+    if(Math.random() < 0.45){
+      State.gold = (State.gold||0) + Math.floor((1 + Math.floor(Math.random()*2)) * (State.goldMult||1));
+    }
   }
   // Drop de relique — 8% de chance sur un ennemi non-boss
   if(!e.boss && Math.random() < 0.08){
@@ -2416,50 +2495,81 @@ function killEnemy(e){
 
 /* ---- RELIQUES — ramassage et buffs ---- */
 function updateRelics(dt){
-  if(!State.relics || !State.player) return;
+  if(!State.player) return;
   // Décroissance du buff actif
   if(State.relicBuff){
     State.relicBuff.timeLeft -= dt;
     if(State.relicBuff.timeLeft <= 0) State.relicBuff = null;
   }
   const p = State.player;
-  for(let i=State.relics.length-1;i>=0;i--){
-    const r = State.relics[i];
-    r.age += dt;
-    const dist = Math.hypot(r.x-p.x, r.y-p.y);
-    if(dist < 36){
-      State.relicBuff = { id:r.def.id, timeLeft:r.def.dur };
-      showBanner(r.def.name, r.def.desc, 1.6, 'evo');
-      flash('#ffffff', 0.25);
-      State.relics.splice(i, 1);
+  // Reliques droppées par ennemis
+  if(State.relics){
+    for(let i=State.relics.length-1;i>=0;i--){
+      const r = State.relics[i];
+      r.age += dt;
+      if(Math.hypot(r.x-p.x, r.y-p.y) < 36){
+        State.relicBuff = { id:r.def.id, timeLeft:r.def.dur };
+        showBanner(r.def.name, r.def.desc, 1.6, 'evo');
+        flash('#ffffff', 0.25);
+        State.relics.splice(i, 1);
+      }
+    }
+  }
+  // Reliques pré-placées sur la map (visibles seulement si Œil du Prédateur actif)
+  if(State.mapRelics && State.shopBuffs?.relicsRevealed){
+    for(let i=State.mapRelics.length-1;i>=0;i--){
+      const r = State.mapRelics[i];
+      r.age += dt;
+      if(Math.hypot(r.x-p.x, r.y-p.y) < 42){
+        State.relicBuff = { id:r.def.id, timeLeft:r.def.dur };
+        showBanner('RELIQUE ANCIENNE · '+r.def.name, r.def.desc, 1.8, 'evo');
+        flash('#d9b26a', 0.35); addShake(6);
+        State.mapRelics.splice(i, 1);
+      }
     }
   }
 }
 
-function drawRelics(){
-  if(!State.relics || State.relics.length===0) return;
-  for(const r of State.relics){
-    const { x:wx, y:wy } = worldToScreen(r.x, r.y);
-    const pulse = 1 + 0.18*Math.sin(r.age*4);
-    ctx.save();
-    ctx.shadowColor = r.def.color;
-    ctx.shadowBlur = 18*pulse;
-    ctx.fillStyle = r.def.color;
-    ctx.globalAlpha = 0.9;
-    const sz = 10*pulse;
+function drawOneRelic(r, isMap){
+  const { x:wx, y:wy } = worldToScreen(r.x, r.y);
+  const pulse = 1 + 0.18*Math.sin(r.age*4);
+  ctx.save();
+  ctx.shadowColor = r.def.color;
+  ctx.shadowBlur = 18*pulse;
+  ctx.fillStyle = r.def.color;
+  ctx.globalAlpha = 0.9;
+  const sz = 10*pulse;
+  if(isMap){
+    // Forme losange dorée pour les reliques de map
+    ctx.fillStyle = '#d9b26a';
+    ctx.shadowColor = '#d9b26a';
+    ctx.beginPath();
+    ctx.moveTo(wx, wy-sz*1.2);
+    ctx.lineTo(wx+sz*0.8, wy);
+    ctx.lineTo(wx, wy+sz*1.2);
+    ctx.lineTo(wx-sz*0.8, wy);
+    ctx.closePath();
+  } else {
     ctx.beginPath();
     ctx.moveTo(wx, wy-sz);
     ctx.lineTo(wx+sz*0.6, wy+sz*0.5);
     ctx.lineTo(wx-sz*0.6, wy+sz*0.5);
     ctx.closePath();
-    ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 9px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(r.def.name.slice(0,6), wx, wy+sz+12);
-    ctx.restore();
+  }
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 9px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(r.def.name.slice(0,8), wx, wy+sz+12);
+  ctx.restore();
+}
+
+function drawRelics(){
+  if(State.relics) for(const r of State.relics) drawOneRelic(r, false);
+  if(State.mapRelics && State.shopBuffs?.relicsRevealed){
+    for(const r of State.mapRelics) drawOneRelic(r, true);
   }
 }
 
@@ -3114,8 +3224,9 @@ function updatePlayer(dt){
     if(State.bloodlust>0) State.bloodlust = Math.max(0, State.bloodlust - CFG.BLOODLUST_DECAY*dt);
   }
 
-  // Regen
-  if(State.pas.regen>0) p.hp = Math.min(p.maxHp, p.hp + State.pas.regen*dt);
+  // Regen (passifs + boutique)
+  const totalRegen = (State.pas.regen||0) + (State.shopBuffs?.regenPerSec||0);
+  if(totalRegen>0) p.hp = Math.min(p.maxHp, p.hp + totalRegen*dt);
 
   // Camera follow (smooth)
   State.cam.x = lerp(State.cam.x, p.x, Math.min(1, 5*dt));
@@ -4572,6 +4683,19 @@ function initMapProps(){
       rot: Math.random()*TAU,
       size: rand(0.8, 1.4)
     });
+  }
+}
+
+function initMapRelics(){
+  State.mapRelics = [];
+  const count = 3 + Math.floor(Math.random() * 3); // 3 à 5 reliques
+  for(let i = 0; i < count; i++){
+    const def = RELIC_DEFS[Math.floor(Math.random() * RELIC_DEFS.length)];
+    let x, y;
+    do {
+      x = rand(-1400, 1400); y = rand(-1400, 1400);
+    } while(len(x - CFG.W/2, y - CFG.H/2) < 300);
+    State.mapRelics.push({ x, y, def, age:0, isMapRelic:true });
   }
 }
 
@@ -6837,6 +6961,9 @@ function updateHud(){
     dl.classList.add('ready');
     dl.textContent = maxCh>1 ? ('DASH '+stock+'/'+maxCh) : 'DASH PRÊT';
   }
+  // Or
+  const gl = document.getElementById('goldLbl');
+  if(gl) gl.textContent = '🪙 ' + (State.gold||0);
   // Boss bar
   const bh = document.getElementById('bossHp');
   if(State.bossActive){
@@ -7032,6 +7159,105 @@ function render(rawDt){
 }
 
 /* ============================================================
+   24. BOUTIQUE DU SANG
+   ============================================================ */
+function openShop(){
+  State.running = false;
+  State.phase = 'shop';
+  document.getElementById('shopGoldAmt').textContent = State.gold || 0;
+  // Pioche 3 items aléatoires distincts, sans réduits à ceux déjà achetés (sauf empilables)
+  const pool = SHOP_ITEMS.filter(it => {
+    if(it.id === 'elixir_carmin' || it.id === 'bombe_ames' || it.id === 'cristal_ame') return true;
+    if(it.id === 'resurrection' && (State.shopBuffs.resurrection)) return false;
+    return true;
+  });
+  const picks = [];
+  const used = new Set();
+  while(picks.length < 3 && pool.length > 0){
+    const idx = Math.floor(Math.random() * pool.length);
+    const item = pool[idx];
+    if(!used.has(item.id)){ picks.push(item); used.add(item.id); }
+    pool.splice(idx, 1);
+  }
+  const list = document.getElementById('shopList');
+  list.innerHTML = picks.map(it => {
+    const cantAfford = (State.gold||0) < it.cost ? ' cant-afford' : '';
+    return `<div class="shop-item${cantAfford}" data-id="${it.id}" onclick="buyShopItem('${it.id}')">
+      <div class="si-cat">${it.cat}</div>
+      <div class="si-icn">${it.icn}</div>
+      <div class="si-name">${it.name}</div>
+      <div class="si-desc">${it.desc}</div>
+      <div class="si-cost">🪙 ${it.cost}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('shopScreen').style.display = 'flex';
+}
+
+function closeShop(){
+  document.getElementById('shopScreen').style.display = 'none';
+  State.phase = 'playing';
+  State.running = true;
+}
+
+function buyShopItem(id){
+  const it = SHOP_ITEMS.find(i=>i.id===id); if(!it) return;
+  if((State.gold||0) < it.cost) return;
+  State.gold -= it.cost;
+  const p = State.player;
+  switch(id){
+    case 'fiole_sang':
+      State.shopBuffs.maxHpMult = (State.shopBuffs.maxHpMult||1) * 1.40;
+      recomputePassives();
+      break;
+    case 'elixir_carmin':
+      p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.50);
+      spawnFloat(p.x, p.y-20, '+50% PV', '#ff6080');
+      break;
+    case 'serment_chair':
+      State.shopBuffs.regenPerSec = (State.shopBuffs.regenPerSec||0) + 0.8;
+      break;
+    case 'essence_corr':
+      State.shopBuffs.dmgMult = (State.shopBuffs.dmgMult||1) * 1.20;
+      recomputePassives();
+      break;
+    case 'lame_maudite':
+      State.shopBuffs.atkSpeedMult = (State.shopBuffs.atkSpeedMult||1) * 1.15;
+      recomputePassives();
+      break;
+    case 'cristal_ame':
+      State.xp = State.xpNeed;
+      break;
+    case 'bombe_ames':
+      for(const e of State.enemies.filter(e=>!e.dead)){
+        damageEnemy(e, 500, e.x, e.y, 'bomb');
+      }
+      flash('#ff6030', 0.5); addShake(12);
+      break;
+    case 'pacte_marchand':
+      State.goldMult = (State.goldMult||1) * 1.30;
+      break;
+    case 'oeil_predateur':
+      State.shopBuffs.relicsRevealed = true;
+      showBanner('ŒIL OUVERT', 'les reliques se révèlent', 1.8, 'evo');
+      break;
+    case 'coeur_boss':
+      State.shopBuffs.extraDash = (State.shopBuffs.extraDash||0) + 1;
+      recomputePassives();
+      break;
+    case 'relique_garante':
+      const rDef = RELIC_DEFS[Math.floor(Math.random()*RELIC_DEFS.length)];
+      State.relics.push({ x:p.x + rand(-60,60), y:p.y + rand(-60,60), def:rDef, age:0 });
+      break;
+    case 'resurrection':
+      State.shopBuffs.resurrection = true;
+      break;
+  }
+  flash('#d9b26a', 0.3);
+  showBanner(it.icn + ' ' + it.name, it.desc, 1.6, 'evo');
+  closeShop();
+}
+
+/* ============================================================
    24. START / GAME OVER / RESTART
    ============================================================ */
 function resetRun(){
@@ -7047,6 +7273,7 @@ function resetRun(){
   State.milestoneDone={}; State.milestoneQueue=[];
   State.turret=null; State.clone=null; State.warCryCd=undefined; State.fauxTimer=0; State.wolfSpawnCd=0;
   State.relics=[]; State.relicBuff=null;
+  State.gold=0; State.goldMult=1; State.shopBuffs={};
   State.activeEvent=null; State.nextEventTime=85+Math.random()*55; State.eventXpTimer=0;
   State.nightWavesDone=new Set();
   State.weapons = [{ id: CHARS[State.char].starter, level:1, cdLeft:0.2 }];
@@ -7066,6 +7293,7 @@ function resetRun(){
   updateLoadoutUi();
   initEnv();
   initMapProps();
+  initMapRelics();
 }
 
 function startGame(){
@@ -7075,6 +7303,7 @@ function startGame(){
   document.getElementById('over').style.display='none';
   document.getElementById('levelUp').style.display='none';
   document.getElementById('milestoneScreen').style.display='none';
+  document.getElementById('shopScreen').style.display='none';
   document.getElementById('hud').style.display='block';
   document.getElementById('gameTopbar').style.display='flex';
   showMobileControls(isMobile());
@@ -7300,6 +7529,7 @@ btnMute.addEventListener('click', ()=>{
 });
 document.getElementById('btnSanctum').addEventListener('click', openSanctum);
 document.getElementById('btnCloseSanctum').addEventListener('click', closeSanctum);
+document.getElementById('btnCloseShop').addEventListener('click', closeShop);
 btnMute2.addEventListener('click', ()=>{
   const on = AUD.toggle();
   SAVE.data.muted = !on; SAVE.save();
