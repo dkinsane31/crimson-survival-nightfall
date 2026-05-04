@@ -888,3 +888,32 @@ Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pou
 Exemples affichés : `-30% PV max`, `Ennemis +60% vitesse`, `Chaque kill coûte 3 PV`, `×2 taux de spawn`, etc.
 
 **Fichiers touchés** : `index.html` (CSS `.curse-btn` + fonction `buildCursePanel`)
+
+---
+
+## Session 2026-05-04 (suite) — Équilibrage tireurs + reliques + bouclier + one-shot (commits multiples)
+
+### Équilibrage tireurs (commit précédent)
+**User** : "trop de monstres qui tirent des boules à distance"
+- Poids spawn tireur : 1.5 → 0.9
+- Pool élite : `['brute','hybride','tireur']` → `['brute','brute','hybride','tireur']`
+- Cadence tir tireur : `rand(1.6,2.6)` → `rand(2.4,3.8)`
+
+### Fix reliques map invisibles
+**User** : "les reliques n'apparaissent pas sur la map"
+- Cause : rendues et ramassables seulement si `shopBuffs.relicsRevealed=true`
+- Fix : suppression de la condition dans `drawRelics()` et `updateRelics()` — toujours visibles
+- Œil du Prédateur refondu : `relicsRevealed=true` → `+35% rayon de ramassage`
+
+### Fix bouclier Aegis sans effet visuel
+**User** : "le bouclier ne fait pas trop effet"
+- Ajout d'une ellipse bleue pulsante autour du joueur dans `drawPlayerIso()` pendant la durée de l'Aegis
+
+### Fix one-shot à 7 minutes (commit bacd9ac)
+**User** : "autour de 7min de jeu, il y a énormément d'ennemis, je suis limite invincible, je passe au milieu des ennemis et d'un coup one-shot car ils me font tous des dégâts"
+
+**Cause** : chaque ennemi a son propre `contactCd=0.75s`, mais `State.iframes` n'était PAS défini après un coup normal — 20+ ennemis pouvaient tous frapper dans la même frame.
+
+**Fix** : ajout de `State.iframes = 0.25;` dans `damagePlayer()` juste après l'application des dégâts. Le joueur ne peut plus subir que ~4 coups/seconde maximum depuis les contacts, quel que soit le nombre d'ennemis superposés.
+
+**Fichiers touchés** : `index.html` (`damagePlayer` — 1 ligne ajoutée)
