@@ -651,3 +651,33 @@ L'utilisateur teste sur mobile via GitHub Pages. Désormais commit + push systé
 3. Boucle zones : `damageEnemy(e, z.dmg, ..., z.kind||'zone')` → vol de vie actif depuis zones Tempête
 
 **Fichiers touchés** : `index.html` (3 corrections dans possibleUpgrades/pickOffers/boucle zones)
+
+---
+
+## Session 2026-05-04 (suite 3) — Audit complet + 3 bugs supplémentaires corrigés
+
+### Demande
+"check la totalité du jeu, test en tant que joueur et corrige les bugs"
+
+### Audit réalisé
+Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pour simuler une expérience joueur et repérer tous les bugs visibles.
+
+### Bugs trouvés et corrigés (commit 1825c04)
+
+**1. Zones — couleur hardcodée (drawFx)**
+- **Bug** : toutes les zones (brume, tempête, sceau) affichaient le même gradient violet `rgba(120,40,210)` quelle que soit leur couleur réelle (`z.color`)
+- **Fix** : `drawFx()` parse maintenant `z.color` pour construire le gradient et la couleur de contour dynamiquement → brume, tempête et sceau ont des teintes visuellement distinctes
+
+**2. Écran milestone — monde invisible (render)**
+- **Bug** : `render()` n'incluait pas `'milestone'` dans sa liste de phases → pendant l'écran de récompense de jalon, le monde 3D disparaissait complètement (fond noir)
+- **Fix** : ajout de `State.phase==='milestone'` dans la condition ligne 6649
+
+**3. wolfSpawnCd non réinitialisé entre runs (resetRun)**
+- **Bug** : `State.wolfSpawnCd` (timer de spawn des loups familiers) n'était pas remis à zéro dans `resetRun()` → en rejouant avec le Nécromancien, le timer pouvait hériter d'une valeur de la run précédente
+- **Fix** : ajout de `State.wolfSpawnCd=0` dans `resetRun()`
+
+### Bugs non-critiques identifiés (pas de fix nécessaire)
+- `drawFamiliars()` (ligne 6449) : ancienne fonction morte, jamais appelée, remplacée par `drawFamiliarIso()` via le pipeline `drawSortedWorld` → pas de bug visible
+- `bladeExplosionCd` undefined au 1er tick : `undefined > 0` est `false`, le guard empêche tout problème → comportement correct
+
+**Fichiers touchés** : `index.html` (3 corrections dans drawFx/render/resetRun)
