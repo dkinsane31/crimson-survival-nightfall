@@ -941,14 +941,18 @@ const MAP_PROPS = {
   crypte:    { count:55, kinds:['tomb','tomb','tomb','pillar','pillar','skull','rubble','chain','candle','sarcophagus','chain','candle'] },
   cathedrale:{ count:52, kinds:['column','column','brazier','brazier','rubble','rubble','altar','statue','stained_glass','candle','chain'] },
   labo:      { count:54, kinds:['console','crate','crate','pipe','pipe','tank','cables','crate','warning','pipe','tank'] },
-  cimetiere: { count:60, kinds:['gravestone','gravestone','gravestone','cross','cross','pillar','rubble','mausoleum','dead_tree','bones','bones','candle'] }
+  cimetiere: { count:60, kinds:['gravestone','gravestone','gravestone','cross','cross','pillar','rubble','mausoleum','dead_tree','bones','bones','candle'] },
+  palais:    { count:56, kinds:['pillar','pillar','statue','statue','altar','altar','candle','candle','chain','sarcophagus','skull','stained_glass','mausoleum'] },
+  nexus:     { count:48, kinds:['rubble','rubble','bones','bones','skull','skull','chain','column','dead_tree','cross'] }
 };
 // Decals de sol (taches, fissures, flaques) — ajoutent de la texture au sol iso
 const GROUND_DECALS = {
   crypte:    { count:70, kinds:['crack','stain','moss'] },
   cathedrale:{ count:60, kinds:['crack','burn','debris'] },
   labo:      { count:55, kinds:['puddle','cable_scrap','crack'] },
-  cimetiere: { count:75, kinds:['grass_tuft','crack','moss','bone_shard'] }
+  cimetiere: { count:75, kinds:['grass_tuft','crack','moss','bone_shard'] },
+  palais:    { count:65, kinds:['stain','crack','crack','moss'] },
+  nexus:     { count:60, kinds:['burn','crack','stain'] }
 };
 
 /* ---- MAPS / ARÈNES ----
@@ -999,6 +1003,28 @@ const MAPS = {
     accent:'#cfe0ff',
     mod:{ critBonus:0.08 },
     modLabel:'+8% chance de critique'
+  },
+  palais: {
+    name:'PALAIS DES OMBRES',
+    tagline:'le trône saigne sous le velours',
+    blurb:'Salles dorées effondrées, cendres de bougies, ombres royales.',
+    bg:{ c0:'#1a0a12', c1:'#0e0608', c2:'#030102' },
+    grid:'#d9b26a', gridA:0.09,
+    particles:'ash',
+    accent:'#d9b26a',
+    mod:{ speedMult:1.12 },
+    modLabel:'+12% vitesse de déplacement'
+  },
+  nexus: {
+    name:'NEXUS ABYSSAL',
+    tagline:'là où la réalité se déchire',
+    blurb:'Vide entre les dimensions, fractures de lumière violette, gravité brisée.',
+    bg:{ c0:'#0f0520', c1:'#05010f', c2:'#010005' },
+    grid:'#d060ff', gridA:0.11,
+    particles:'rain',
+    accent:'#d060ff',
+    mod:{ dmgMult:1.20 },
+    modLabel:'+20% dégâts infligés'
   }
 };
 
@@ -6881,7 +6907,7 @@ function buildMapCards(){
     const grad = `linear-gradient(135deg, ${m.bg.c0} 0%, ${m.bg.c1} 60%, ${m.bg.c2} 100%)`;
     d.innerHTML = `
       <div class="map-prev" style="background:${grad};color:${m.accent};text-shadow:0 0 16px ${m.accent}bb">
-        ${key==='crypte'?'☾':key==='cathedrale'?'☩':key==='labo'?'⚗':'✺'}
+        ${key==='crypte'?'☾':key==='cathedrale'?'☩':key==='labo'?'⚗':key==='cimetiere'?'✺':key==='palais'?'♔':key==='nexus'?'✦':'✺'}
       </div>
       <h3>${m.name}</h3>
       <div class="role">${m.tagline}</div>
