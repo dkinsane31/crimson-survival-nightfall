@@ -2211,7 +2211,9 @@ function spawnPart(x,y,color,life=0.6,vx=null,vy=null,size=null){
   });
 }
 function spawnFloat(x,y,text,color='#fff',crit=false){
-  State.floats.push({ x, y:y-8, vy:-45, life:0.85, maxLife:0.85, text, color, crit });
+  if(!crit && State.floats.length >= 40) return;
+  const life = crit ? 0.85 : 0.50;
+  State.floats.push({ x, y:y-8, vy:-45, life, maxLife:life, text, color, crit });
 }
 function addShake(v){ State.shake = Math.max(State.shake, v); }
 function flash(col='#ff2a44', life=0.16){ State.flashCol=col; State.flashLife=life; }
@@ -2906,10 +2908,6 @@ function drawOneRelic(r, isMap){
   ctx.fill();
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 9px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(r.def.name.slice(0,8), wx, wy+sz+12);
   ctx.restore();
 }
 
