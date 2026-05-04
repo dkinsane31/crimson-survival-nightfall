@@ -260,6 +260,42 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
 /* Or dans le HUD */
 .gold-hud{ color:var(--gold); font-size:13px; letter-spacing:.1em; font-weight:bold; }
 
+/* ===== INDICATEUR D'ÉVÉNEMENT ACTIF ===== */
+#eventIndicator{
+  position:absolute; bottom:60px; left:50%; transform:translateX(-50%);
+  display:none; flex-direction:column; align-items:center; gap:3px;
+  pointer-events:none; z-index:5;
+}
+#eventIndicator .ev-name{
+  font-family:"Cinzel",serif; font-size:13px; letter-spacing:.3em;
+  text-transform:uppercase; color:#fff;
+  text-shadow:0 0 12px currentColor;
+}
+#eventIndicator .ev-timer{
+  font-size:11px; letter-spacing:.2em; color:var(--ink2);
+}
+#eventIndicator .ev-bar{
+  width:120px; height:3px; background:rgba(255,255,255,.12); border-radius:2px; overflow:hidden;
+}
+#eventIndicator .ev-bar-fill{
+  height:100%; width:100%; border-radius:2px; transition:width .3s linear;
+}
+
+/* Liseré de bord — pulse pendant l'événement */
+#eventBorder{
+  position:absolute; inset:0; pointer-events:none; z-index:4;
+  border:3px solid transparent; border-radius:0;
+  display:none;
+}
+
+/* Vague nocturne — compteur bas d'écran */
+#waveIndicator{
+  position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+  display:none; align-items:center; gap:8px;
+  font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+  color:#ff8ea0; pointer-events:none; z-index:5;
+}
+
 /* ===== ÉCRAN JALON (milestone) ===== */
 #milestoneScreen{
   position:absolute;inset:0;display:none;align-items:center;justify-content:center;
@@ -328,6 +364,21 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
     </div>
     <div class="loadout" id="loadout"></div>
     <div class="dashui" id="dashLbl">DASH PRÊT</div>
+
+    <!-- Liseré coloré pendant un événement -->
+    <div id="eventBorder"></div>
+
+    <!-- Indicateur d'événement actif (centré bas) -->
+    <div id="eventIndicator">
+      <div class="ev-name" id="evName">FRÉNÉSIE</div>
+      <div class="ev-bar"><div class="ev-bar-fill" id="evBarFill"></div></div>
+      <div class="ev-timer" id="evTimer">20s</div>
+    </div>
+
+    <!-- Compteur de vague nocturne -->
+    <div id="waveIndicator">
+      <span id="waveName">HORDE</span> · <span id="waveCount">0</span> ennemis restants
+    </div>
     <div id="comboLbl" style="position:absolute;top:50%;right:16px;transform:translateY(-50%);pointer-events:none;text-align:right;display:none">
       <div style="font-family:Cinzel,serif;font-size:46px;color:#ffd9a8;text-shadow:0 0 16px #ff2a44,0 0 30px #ff2a44;letter-spacing:.08em"><span id="comboNum">3</span>×</div>
       <div style="font-size:10px;color:var(--cold);letter-spacing:.2em;text-transform:uppercase">COMBO</div>
@@ -2133,12 +2184,14 @@ function doSpawn(dt){
   for(const nw of NIGHT_WAVES){
     if(!State.nightWavesDone.has(nw.at) && State.time >= nw.at && !State.bossActive){
       State.nightWavesDone.add(nw.at);
-      showBanner(nw.name, nw.sub, 2.0, 'boss');
-      flash('#1a0020', 0.5); addShake(12); AUD.boss();
+      State.activeNightWave = { name: nw.name, total: nw.count, spawned: nw.count };
+      showBanner(nw.name, nw.sub, 3.0, 'boss');
+      flash('#1a0020', 0.6); addShake(14); AUD.boss();
       for(let i=0; i<nw.count; i++){
         const kind = nw.kinds[Math.floor(Math.random()*nw.kinds.length)];
         const pos = randomSpawnPos();
-        spawnEnemyAt(kind, pos.x, pos.y, {});
+        const e = spawnEnemyAt(kind, pos.x, pos.y, {});
+        if(e) e.fromWave = true;
       }
     }
   }
@@ -7136,6 +7189,45 @@ function updateHud(){
   // Or
   const gl = document.getElementById('goldLbl');
   if(gl) gl.textContent = '🪙 ' + (State.gold||0);
+
+  // Indicateur d'événement actif
+  const evEl  = document.getElementById('eventIndicator');
+  const evBrd = document.getElementById('eventBorder');
+  if(State.activeEvent){
+    const ev = State.activeEvent;
+    const evColors = { frenzy:'#ff4444', darkness:'#6644ff', pact:'#ff8800', bloodrain:'#ff2266' };
+    const col = evColors[ev.id] || '#ffffff';
+    const pct = (ev.timeLeft / ev.dur * 100).toFixed(1) + '%';
+    document.getElementById('evName').textContent = ev.name;
+    document.getElementById('evName').style.color = col;
+    document.getElementById('evBarFill').style.width = pct;
+    document.getElementById('evBarFill').style.background = col;
+    document.getElementById('evTimer').textContent = Math.ceil(ev.timeLeft) + 's';
+    evEl.style.display  = 'flex';
+    evBrd.style.display = 'block';
+    evBrd.style.borderColor = col;
+    evBrd.style.boxShadow = '0 0 18px '+col+' inset, 0 0 18px '+col;
+    evBrd.style.opacity = 0.5 + 0.3*Math.abs(Math.sin(State.time*3));
+  } else {
+    evEl.style.display  = 'none';
+    evBrd.style.display = 'none';
+  }
+
+  // Compteur de vague nocturne
+  const wvEl = document.getElementById('waveIndicator');
+  if(State.activeNightWave){
+    const remaining = State.enemies.filter(e=>!e.dead && e.fromWave).length;
+    if(remaining > 0){
+      document.getElementById('waveName').textContent = State.activeNightWave.name;
+      document.getElementById('waveCount').textContent = remaining;
+      wvEl.style.display = 'flex';
+    } else {
+      State.activeNightWave = null;
+      wvEl.style.display = 'none';
+    }
+  } else {
+    wvEl.style.display = 'none';
+  }
   // Boss bar
   const bh = document.getElementById('bossHp');
   if(State.bossActive){
@@ -7452,6 +7544,7 @@ function resetRun(){
   State.relics=[]; State.relicBuff=null;
   State.gold=0; State.goldMult=1; State.shopBuffs={};
   State.essenceNoireBonus=0; State.lameAbsolueCount=0; State.extraRevenantChargesLeft=0;
+  State.activeNightWave=null;
   State.activeEvent=null; State.nextEventTime=85+Math.random()*55; State.eventXpTimer=0;
   State.nightWavesDone=new Set();
   State.weapons = [{ id: CHARS[State.char].starter, level:1, cdLeft:0.2 }];
