@@ -746,3 +746,43 @@ Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pou
 - Vagues nocturnes + bosses : la vague attend la fin du boss si `bossActive` est true au moment du déclenchement
 
 **Fichiers touchés** : `index.html` (updateRandomEvent — fix orbe, drawRelics — dead code)
+
+---
+
+## Session 2026-05-04 (suite) — Boutique du Sang + Reliques de Map
+
+### Boutique du Sang (commit e2b34a5)
+
+**Implémentation complète du système d'or et de la boutique :**
+
+**Or gagné :**
+- Ennemis normaux : 1-2 or (45% de chance par kill)
+- Élites : 5-8 or par kill
+- Mini-boss : 20-25 or
+- Boss final : 60-80 or
+- Multiplicateur `State.goldMult` (démarrage x1, +30% avec Pacte du Marchand)
+
+**12 items en boutique (4 catégories) :**
+- Survie : Fiole de Sang (+40% PV max), Élixir Carmin (soigne 50%), Serment de Chair (+0.8 PV/s)
+- Pouvoir : Essence Corrompue (+20% dégâts), Lame Maudite (+15% vitesse attaque), Cristal d'Âme (+1 niveau)
+- Spécial : Bombe à Âmes (500 dégâts à tous), Pacte du Marchand (+30% or), Œil du Prédateur (révèle reliques)
+- Rare : Cœur de Boss (+1 dash charge), Relique Garantie (drop relique sol), Résurrection (1 mort gratuite à 30% PV)
+
+**Flux boutique :**
+- Mini-boss tué → `openShop()` (au lieu de pacte sacrificiel)
+- Boss final tué → `openPactChoice()` (comportement inchangé)
+- Bouton "Passer" → `closeShop()` sans achat
+
+**Reliques pré-placées sur la map :**
+- 3 à 5 reliques générées à `initMapRelics()` appelé dans `resetRun()`
+- Invisibles par défaut (losange doré)
+- Révélées uniquement après achat de "Œil du Prédateur" (`State.shopBuffs.relicsRevealed`)
+- Ramassables au contact (rayon 42) comme les reliques droppées
+
+**Résurrection boutique :**
+- Vérifiée en premier dans `damagePlayer()` avant le SIG Revenant necro
+- Se consomme une fois (`resurrectionUsed = true`)
+
+**HUD :** affichage de l'or en bas à droite (🪙 X)
+
+**Fichiers touchés** : `index.html` (SHOP_ITEMS, openShop, closeShop, buyShopItem, initMapRelics, updateRelics, drawRelics, killEnemy, damagePlayer, recomputePassives, resetRun, startGame, updateHud, btnCloseShop event listener)
