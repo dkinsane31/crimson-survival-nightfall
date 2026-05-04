@@ -2086,7 +2086,8 @@ function updateRandomEvent(dt){
     if(State.eventXpTimer <= 0){
       State.eventXpTimer = 1.8;
       const p = State.player;
-      State.xpOrbs.push({ x: p.x + rand(-200,200), y: p.y + rand(-200,200), r:7, xp:3 });
+      State.xpOrbs.push({ x: p.x + rand(-200,200), y: p.y + rand(-200,200),
+        vx:0, vy:0, life:18, col:'#ff6080', xp:3 });
     }
   }
   if(State.activeEvent.timeLeft <= 0){
@@ -2381,7 +2382,6 @@ function updateRelics(dt){
 
 function drawRelics(){
   if(!State.relics || State.relics.length===0) return;
-  const p = State.player;
   for(const r of State.relics){
     const { x:wx, y:wy } = worldToScreen(r.x, r.y);
     const pulse = 1 + 0.18*Math.sin(r.age*4);
