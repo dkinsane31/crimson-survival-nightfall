@@ -92,6 +92,10 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
 .char .map-prev{height:78px;border-radius:4px;margin-bottom:8px;position:relative;overflow:hidden;font-size:34px}
 .char .map-prev::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(255,255,255,0.1),transparent 70%);pointer-events:none}
 .char .mod{margin-top:8px;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--cold);padding:3px 6px;border:1px solid rgba(111,179,255,.3);border-radius:2px;display:inline-block}
+.char.locked{opacity:.42;filter:grayscale(.75);cursor:not-allowed}
+.char.locked:hover{transform:none;border-color:rgba(180,200,230,.18);box-shadow:none}
+.char.locked .map-prev::before{content:'🔒';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;background:rgba(0,0,0,.55);z-index:1}
+.char .unlock-hint{margin-top:8px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(180,120,80,.75);font-style:italic}
 
 /* Level up cards */
 .lu-title{font-family:"Cinzel",serif;font-size:22px;letter-spacing:.3em;color:#fff;margin-bottom:4px}
@@ -829,7 +833,8 @@ const SAVE = {
     muted:false, lastChar:'deathborne', lastMap:'crypte',
     shards:0,                                 // éclats d'ombre (monnaie meta)
     permaActive:[],                           // ids de PERMA actifs (max 3)
-    permaOwned:[]                             // ids achetés
+    permaOwned:[],                            // ids achetés
+    bossesDefeated:[]                         // boss vaincus (unlock maps)
   },
   load(){
     try{ const s=localStorage.getItem(this.key); if(s) this.data = Object.assign(this.data, JSON.parse(s)); }catch(e){}
@@ -969,7 +974,8 @@ const MAPS = {
     particles:'rain',
     accent:'#6fb3ff',
     mod:null,
-    modLabel:'Classique · équilibré'
+    modLabel:'Classique · équilibré',
+    unlockBoss:null
   },
   cathedrale: {
     name:'CATHÉDRALE EN RUINES',
@@ -980,7 +986,8 @@ const MAPS = {
     particles:'ash',
     accent:'#ff7a44',
     mod:{ dmgMult:1.15 },
-    modLabel:'+15% dégâts infligés'
+    modLabel:'+15% dégâts infligés',
+    unlockBoss:'alpha'
   },
   labo: {
     name:'LABORATOIRE SOUTERRAIN',
@@ -991,7 +998,8 @@ const MAPS = {
     particles:'steam',
     accent:'#6fe0ff',
     mod:{ atkSpeedMult:1.10 },
-    modLabel:'+10% cadence d\'attaque'
+    modLabel:'+10% cadence d\'attaque',
+    unlockBoss:'matriarche'
   },
   cimetiere: {
     name:'CIMETIÈRE ARGENTÉ',
@@ -1002,7 +1010,8 @@ const MAPS = {
     particles:'moths',
     accent:'#cfe0ff',
     mod:{ critBonus:0.08 },
-    modLabel:'+8% chance de critique'
+    modLabel:'+8% chance de critique',
+    unlockBoss:'gardien'
   },
   palais: {
     name:'PALAIS DES OMBRES',
@@ -1013,7 +1022,8 @@ const MAPS = {
     particles:'ash',
     accent:'#d9b26a',
     mod:{ speedMult:1.12 },
-    modLabel:'+12% vitesse de déplacement'
+    modLabel:'+12% vitesse de déplacement',
+    unlockBoss:'seigneur'
   },
   nexus: {
     name:'NEXUS ABYSSAL',
@@ -1024,7 +1034,8 @@ const MAPS = {
     particles:'rain',
     accent:'#d060ff',
     mod:{ dmgMult:1.20 },
-    modLabel:'+20% dégâts infligés'
+    modLabel:'+20% dégâts infligés',
+    unlockBoss:'reine'
   }
 };
 
@@ -2247,6 +2258,19 @@ function killEnemy(e){
     State.bossKillsRun++;
     State.player.hp = Math.min(State.player.maxHp, State.player.hp + State.player.maxHp*0.3);
     State.xp += 20;
+    // Déverrouille la map associée à ce boss
+    const bId = e.bossDef.id;
+    const defeated = SAVE.data.bossesDefeated || [];
+    if(!defeated.includes(bId)){
+      defeated.push(bId);
+      SAVE.data.bossesDefeated = defeated;
+      for(const [mk, md] of Object.entries(MAPS)){
+        if(md.unlockBoss === bId){
+          setTimeout(()=>showBanner('ARÈNE DÉVERROUILLÉE', md.name, 2.4), 2200);
+        }
+      }
+      SAVE.save();
+    }
     // Propose un pacte sacrificiel (choix parmi 3)
     setTimeout(openPactChoice, 700);
   } else if(e.elite){
@@ -6900,27 +6924,33 @@ function buildPermaList(){
 function buildMapCards(){
   const el = document.getElementById('maps');
   el.innerHTML='';
+  const defeated = new Set(SAVE.data.bossesDefeated || []);
   for(const key in MAPS){
     const m = MAPS[key];
+    const locked = m.unlockBoss && !defeated.has(m.unlockBoss);
     const d = document.createElement('div');
-    d.className = 'char' + (State.map===key?' sel':'');
+    d.className = 'char' + (State.map===key?' sel':'') + (locked?' locked':'');
     const grad = `linear-gradient(135deg, ${m.bg.c0} 0%, ${m.bg.c1} 60%, ${m.bg.c2} 100%)`;
+    const icon = key==='crypte'?'☾':key==='cathedrale'?'☩':key==='labo'?'⚗':key==='cimetiere'?'✺':key==='palais'?'♔':key==='nexus'?'✦':'✺';
+    const bossName = m.unlockBoss ? (BOSS_DEF.find(b=>b.id===m.unlockBoss)?.name||'') : '';
     d.innerHTML = `
       <div class="map-prev" style="background:${grad};color:${m.accent};text-shadow:0 0 16px ${m.accent}bb">
-        ${key==='crypte'?'☾':key==='cathedrale'?'☩':key==='labo'?'⚗':key==='cimetiere'?'✺':key==='palais'?'♔':key==='nexus'?'✦':'✺'}
+        ${icon}
       </div>
-      <h3>${m.name}</h3>
-      <div class="role">${m.tagline}</div>
-      <div class="stats" style="min-height:54px">${m.blurb}</div>
-      <div class="mod">${m.modLabel}</div>
+      <h3>${locked?'???':m.name}</h3>
+      <div class="role">${locked?'arène scellée':m.tagline}</div>
+      <div class="stats" style="min-height:54px">${locked?'':m.blurb}</div>
+      ${locked?`<div class="unlock-hint">vaincre ${bossName}</div>`:`<div class="mod">${m.modLabel}</div>`}
     `;
-    d.onclick = ()=>{
-      State.map = key;
-      State.mapDef = MAPS[key];
-      SAVE.data.lastMap = key; SAVE.save();
-      buildMapCards();
-      initEnv(); // refresh background preview
-    };
+    if(!locked){
+      d.onclick = ()=>{
+        State.map = key;
+        State.mapDef = MAPS[key];
+        SAVE.data.lastMap = key; SAVE.save();
+        buildMapCards();
+        initEnv();
+      };
+    }
     el.appendChild(d);
   }
 }
