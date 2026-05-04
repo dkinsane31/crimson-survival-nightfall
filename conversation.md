@@ -632,3 +632,22 @@ L'utilisateur teste sur mobile via GitHub Pages. Désormais commit + push systé
 - Fusillade Sanglante (pistolets+tempête) — chaque balle éclate en 3 gouttes de sang
 - Maelström Abyssal (onde+brume) — onde laisse un nuage de brume à son apogée
 - Vortex Sanguin (lames+onde) — inchangé
+
+---
+
+## Session 2026-05-04 (suite 2) — Bug cartes manquantes
+
+### Diagnostic "l'ensemble des cartes ne sont pas sur le jeu" (commit 9e08a6d)
+
+**Cause identifiée** : les nouvelles armes (faux, brume, tempête) avaient un poids `w:3` dans le pool de level-up, noyé par 13 passifs à `w:4` chacun (total 52). Probabilité de voir une nouvelle arme à un level-up donné : ~27%. Le joueur pouvait facilement jouer 10+ niveaux sans jamais voir ces armes.
+
+**2 bugs secondaires découverts pendant l'analyse** :
+- `possibleUpgrades` ne gérait pas `passId==='lifestl'` → l'évolution Déluge Carmin ne pouvait jamais se débloquer
+- `damageEnemy` dans la boucle zones utilisait `'sceau'` hardcodé → le vol de vie de Tempête ne s'appliquait pas depuis les zones
+
+**Fixes appliqués (commit 9e08a6d)** :
+1. `pickOffers` : garantit une nouvelle arme dans les offres si le joueur en a < 4 → les nouvelles armes apparaissent systématiquement tôt
+2. `possibleUpgrades` : ajout du cas `lifestl` → Déluge Carmin désormais débloquable (3 stacks vol de vie + tempête max)
+3. Boucle zones : `damageEnemy(e, z.dmg, ..., z.kind||'zone')` → vol de vie actif depuis zones Tempête
+
+**Fichiers touchés** : `index.html` (3 corrections dans possibleUpgrades/pickOffers/boucle zones)
