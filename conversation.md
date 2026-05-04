@@ -917,3 +917,19 @@ Exemples affichés : `-30% PV max`, `Ennemis +60% vitesse`, `Chaque kill coûte 
 **Fix** : ajout de `State.iframes = 0.25;` dans `damagePlayer()` juste après l'application des dégâts. Le joueur ne peut plus subir que ~4 coups/seconde maximum depuis les contacts, quel que soit le nombre d'ennemis superposés.
 
 **Fichiers touchés** : `index.html` (`damagePlayer` — 1 ligne ajoutée)
+
+---
+
+## Session 2026-05-04 (suite) — Lisibilité (commit cac48ba)
+
+**User** : "trop illisible" (captures d'écran montrant des centaines de chiffres "58","79","182" + textes "BOUCLIER","CRÂNE DE","GANT DE" partout)
+
+**Problèmes identifiés** :
+1. `spawnFloat()` appelé à chaque hit sans limite → des centaines de nombres en même temps
+2. `drawOneRelic()` affichait le nom tronqué sous chaque icône de relique → pollution de texte sur toute la map
+
+**Corrections** :
+- `spawnFloat()` : cap à 40 floats non-crit (les crits passent toujours) + durée de vie réduite : 0.85s → 0.50s pour les floats normaux
+- `drawOneRelic()` : suppression du `fillText(name)` — seule l'icône (triangle/losange) est dessinée
+
+**Fichiers touchés** : `index.html` (`spawnFloat`, `drawOneRelic`)
