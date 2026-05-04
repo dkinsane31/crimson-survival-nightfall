@@ -2598,6 +2598,7 @@ function damagePlayer(amount){
   if(State.activeEvent?.id==='pact') dmg *= 1.4;
   if(State.relicBuff?.id==='aegis') return; // invulnérable pendant l'égide
   State.player.hp -= dmg;
+  State.iframes = 0.25; // empêche plusieurs ennemis de frapper dans la même frame
   flash('#ff2a44', 0.12); addShake(3);
   AUD.blip(140,0.08,'square',0.1,-50);
   spawnFloat(State.player.x, State.player.y-20, '-'+Math.round(dmg), '#ff8ea0');
