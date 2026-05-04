@@ -2359,6 +2359,7 @@ function doSpawn(dt){
     // Burst de base (phase 0-2min ≈ 1-5, 2-5min ≈ 5-11, 5+ ≈ 11+)
     const burst = Math.max(1, Math.round((1 + Math.floor(State.time/28)) * spawnMul));
     for(let i=0;i<burst;i++){
+      if(State.enemies.length >= 200) break; // cap ennemis vivants
       const kind = pickEnemyKindByTime();
       const pos = randomSpawnPos();
       // "Silence Absolu" : seulement des élites
@@ -2991,9 +2992,9 @@ function openSermentChoice(){
       SAVE.save();
       recomputePassives();
       document.getElementById('sermentScreen').style.display = 'none';
-      State.phase = 'playing'; State.running = true;
       showBanner('SERMENT SCELLÉ', s.name, 2.2, 'evo');
       AUD.evo(); flash('#d9b26a', 0.65); addShake(12);
+      setTimeout(gameOver, 2200); // fin du run après le serment
     };
     el.appendChild(d);
   });
