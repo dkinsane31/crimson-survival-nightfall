@@ -813,3 +813,60 @@ Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pou
 **User** : "tu as upload sur github ?" → Confirmé. Commits `ecd84c9` et `7344ed9` poussés sur `main`.
 
 **User** : "sauvegarde notre conversation" → conversation.md mis à jour et committé.
+
+---
+
+## Session 2026-05-04 — Défis, Malédictions, Événements de Map (commit 23d01ab)
+
+**User** : validation des 3 features proposées : Défis & Succès ✓, Mode Malédiction ✓, Événements de Map ✓ / Armes évolutions + 5ème personnage → garder en tête pour plus tard
+
+### Événements de Run (MAP_RUN_EVENTS)
+
+10 modificateurs tirés aléatoirement au début de chaque run :
+- Bénédiction du Sang (+25% XP)
+- Nuit Généreuse (boutique -30% prix)
+- Pacte des Âmes (ennemis +20% PV · XP +35%)
+- Nuit de Chasse (vagues 60s plus tôt)
+- Terrain Maudit (-12% vitesse)
+- Boss Enragé (boss +50% PV · +25% dégâts)
+- Ruée vers l'Or (+40% or)
+- Sang pour Sang (+1 PV/kill · pas de régen)
+- Horde Infinie (+40% spawn)
+- Arène Bénie (double reliques sur map)
+
+**HUD :** badge discret centré en haut (icône + nom + bordure colorée). Banner au démarrage du run.
+**Hookés dans :** recomputePassives (xpMult, speedMult, enemyHpMult, killHealMRE, noRegenMRE), doSpawn (spawnMult, earlyWaves), spawnMiniBoss/FinalBoss (bossHpMult/bossDmgMult), openShop (shopDiscount + affichage prix barré), buyShopItem (shopDiscount), initMapRelics (doubleRelics), resetRun (goldMult, bossTimer ajusté)
+
+### Mode Malédiction (CURSES)
+
+7 malédictions optionnelles sélectionnables sur l'écran de personnage :
+- Chair Fragile (-30% PV max · +20% éclats)
+- Frénésie Éternelle (ennemis +60% vitesse · +30% éclats)
+- Silence Noir (pas de régen · +15% éclats)
+- Prix du Sang (kill = -3 PV · +20% éclats)
+- Hordes Sans Fin (×2 spawn · +35% éclats)
+- Sans Abri (boutique inaccessible · +10% éclats)
+- Aveuglement (vision réduite · +15% éclats) + overlay darkness permanent
+
+**UI :** panneau toggle sur charScreen avec bonus éclats total affiché. Résumé actif sur l'écran de game over.
+**Bonus éclats :** appliqué en multiplicateur dans recordRun (ex: 50 éclats de base × 1.35 avec Frénésie = 67).
+**Rejouer** reset les malédictions automatiquement.
+
+### Défis & Succès (CHALLENGES)
+
+19 défis trackés à chaque fin de run, récompensant des éclats :
+
+**7 globaux :** Première Nuit (30💎), Survivant de l'Ombre (40💎), Bain de Sang (50💎), Élite de Nuit (40💎), Âme Damnée (60💎), Chasseur de Reliques (45💎), Tueur de Légendes (50💎)
+
+**3 par personnage :**
+- Deathborne : Carnage Absolu / Maître du Flux / Jugement Ultime
+- Selene : Ombre Fugace / Lame Éclair / Tranchée Noire
+- Hybride : Alpha Suprême / Muraille de Sang / Seigneur Infernal
+- Nécro : Armée des Ombres / Seigneur des Âmes / Maître des Morts
+
+**UI :** bouton "Défis ⚔" sur le titre → écran défis groupés par catégorie avec statut ✓ et récompense.
+**Tracking :** relicsCollectedRun, familiarsSummonedRun compteurs initialisés dans resetRun et incrémentés dans updateRelics + weapon fire functions (4 familiers necro). Résultats passés dans runStats à gameOver.
+
+**Fichiers touchés** : `index.html` (+336 lignes nettes, 8214 lignes total)
+
+**User** : "parle français" → confirmé, réponses en français désormais.
