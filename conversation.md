@@ -723,3 +723,26 @@ Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pou
 - Indicateur de buff actif affiché en bas-gauche
 
 **Fichiers touchés** : `index.html` (MAPS, grantXp, spawnEnemyAt, doSpawn, triggerRandomEvent, updateRandomEvent, updateRelics, drawRelics, damageEnemy, damagePlayer, updatePlayer, updateEnemies, render, resetRun)
+
+---
+
+### Audit bugs + upload (commit b345f68)
+
+**User** : "check les bugs et upload sur github"
+
+**Bug trouvé et corrigé — Orbes de pluie de sang (BLOODRAIN)**
+- **Bug** : les xpOrbs créés par l'événement `bloodrain` n'avaient pas les champs `vx`, `vy`, `life`, `col`
+- **Effet** : dès le premier tick, `o.vx *= 0.94` → NaN, `o.x += NaN*dt` → position NaN → orbes invisibles et jamais ramassables
+- **Fix** : ajout de `vx:0, vy:0, life:18, col:'#ff6080'` dans le push de l'orbe
+
+**Dead code nettoyé**
+- Variable `const p = State.player` inutilisée dans `drawRelics()` → retirée
+
+**Vérifications sans bug**
+- `State.nightWavesDone` : toujours initialisé via `resetRun()` avant `State.phase='playing'` — pas de crash possible
+- `State.relics` : guard `if(!State.relics || !State.player)` dans `updateRelics()` — sûr
+- Optional chaining `State.activeEvent?.id` / `State.relicBuff?.id` — sûrs partout
+- `worldToScreen()` dans `drawRelics()` et overlay obscurité : coordonnées correctes dans leurs contextes respectifs
+- Vagues nocturnes + bosses : la vague attend la fin du boss si `bossActive` est true au moment du déclenchement
+
+**Fichiers touchés** : `index.html` (updateRandomEvent — fix orbe, drawRelics — dead code)
