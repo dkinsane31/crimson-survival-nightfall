@@ -998,7 +998,7 @@ const MAPS = {
     accent:'#6fb3ff',
     mod:null,
     modLabel:'Classique · équilibré',
-    unlockBoss:null,
+    unlockBoss:null, finalBossId:'alpha',
     xpMult:1.0, enemyMult:1.0
   },
   cathedrale: {
@@ -1011,7 +1011,7 @@ const MAPS = {
     accent:'#ff7a44',
     mod:{ dmgMult:1.15 },
     modLabel:'+15% dégâts infligés',
-    unlockBoss:'alpha',
+    unlockBoss:'alpha', finalBossId:'matriarche',
     xpMult:1.25, enemyMult:1.20
   },
   labo: {
@@ -1024,7 +1024,7 @@ const MAPS = {
     accent:'#6fe0ff',
     mod:{ atkSpeedMult:1.10 },
     modLabel:'+10% cadence d\'attaque',
-    unlockBoss:'matriarche',
+    unlockBoss:'matriarche', finalBossId:'gardien',
     xpMult:1.55, enemyMult:1.40
   },
   cimetiere: {
@@ -1037,7 +1037,7 @@ const MAPS = {
     accent:'#cfe0ff',
     mod:{ critBonus:0.08 },
     modLabel:'+8% chance de critique',
-    unlockBoss:'gardien',
+    unlockBoss:'gardien', finalBossId:'seigneur',
     xpMult:1.85, enemyMult:1.65
   },
   palais: {
@@ -1050,7 +1050,7 @@ const MAPS = {
     accent:'#d9b26a',
     mod:{ speedMult:1.12 },
     modLabel:'+12% vitesse de déplacement',
-    unlockBoss:'seigneur',
+    unlockBoss:'seigneur', finalBossId:'reine',
     xpMult:2.2, enemyMult:1.90
   },
   nexus: {
@@ -1063,7 +1063,7 @@ const MAPS = {
     accent:'#d060ff',
     mod:{ dmgMult:1.20 },
     modLabel:'+20% dégâts infligés',
-    unlockBoss:'reine',
+    unlockBoss:'reine', finalBossId:'reine',
     xpMult:2.6, enemyMult:2.20
   }
 };
@@ -2064,9 +2064,18 @@ function doSpawn(dt){
     AUD.blip(220,0.4,'sawtooth',0.14,-60);
     State.eliteTimer = 38 + rand(-8, 8);
   }
-  // Boss cycle — premier boss un peu plus tardif (2 min 30)
-  State.bossTimer -= dt;
-  if(State.bossTimer<=0){ spawnBoss(); State.bossTimer = 165 + State.bossIndex*30; }
+  // Boss final à 10min
+  if(!State.finalBossSpawned && State.time>=600 && !State.bossActive){
+    spawnFinalBoss(); return;
+  }
+  // Mini-boss cycle : 3 par run à ~3min/5min30/8min
+  if(!State.finalBossSpawned){
+    State.bossTimer -= dt;
+    if(State.bossTimer<=0 && State.miniBossCount<3){
+      spawnMiniBoss();
+      State.bossTimer = 155;
+    }
+  }
 }
 
 function triggerRandomEvent(){
@@ -2096,20 +2105,54 @@ function updateRandomEvent(dt){
   }
 }
 
-function spawnBoss(){
-  const def = BOSS_DEF[State.bossIndex % BOSS_DEF.length];
-  State.bossIndex++;
+// Définitions des mini-boss (sprites à venir)
+const MINI_BOSS_DEF = [
+  { id:'mb_chasser',  name:'CHASSEUR MAUDIT',   hp:420,  spd:140, r:22, dmg:18, col:'#2a0a0a', glow:'#ff4444', ai:'dash'  },
+  { id:'mb_gardien',  name:'GARDIEN DE CHAIR',  hp:780,  spd:75,  r:28, dmg:28, col:'#0a0a2a', glow:'#8844ff', ai:'chase' },
+  { id:'mb_spectre',  name:'SPECTRE SANGUINAIRE',hp:1100, spd:110, r:25, dmg:22, col:'#0a1a0a', glow:'#44ffaa', ai:'shoot' },
+];
+
+function spawnMiniBoss(){
+  const def = MINI_BOSS_DEF[State.miniBossCount % MINI_BOSS_DEF.length];
   const pos = randomSpawnPos();
-  const s = scale();
+  const tScale = 1 + State.time * 0.002;
   const b = {
-    kind:'boss', boss:true, bossDef:def, elite:true, dead:false,
+    kind:'miniboss', boss:true, bossDef:def, elite:true, dead:false, isMini:true,
     x:pos.x, y:pos.y, vx:0, vy:0,
     r: def.r,
-    hp: def.hp * (1 + State.bossIndex*0.35),
-    maxHp: def.hp * (1 + State.bossIndex*0.35),
-    dmg: def.dmg * (1 + State.bossIndex*0.15),
+    hp: def.hp * tScale,
+    maxHp: def.hp * tScale,
+    dmg: def.dmg * (1 + State.time*0.001),
     spd: def.spd * spdScale(),
-    xp: def.xp,
+    xp: 25 + State.miniBossCount * 15,
+    col: def.col, glow: def.glow,
+    ai: def.ai,
+    age:0, hit:0, stagger:0,
+    shootCd:2.0, dashCd:2.5, dashing:0, phaseCd:4.0, spawnCd:3.5
+  };
+  State.enemies.push(b);
+  State.bossActive = b;
+  State.miniBossCount++;
+  showBanner('MINI-BOSS', def.name.toLowerCase(), 2.2, 'boss');
+  AUD.boss(); flash('#3a0a0a', 0.35); addShake(10);
+}
+
+function spawnFinalBoss(){
+  State.finalBossSpawned = true;
+  const mapFinalId = State.mapDef?.finalBossId;
+  const def = (mapFinalId && BOSS_DEF.find(b=>b.id===mapFinalId)) || BOSS_DEF[0];
+  State.bossIndex++;
+  const pos = randomSpawnPos();
+  const tScale = 1 + State.time * 0.003;
+  const b = {
+    kind:'boss', boss:true, bossDef:def, elite:true, dead:false, isFinal:true,
+    x:pos.x, y:pos.y, vx:0, vy:0,
+    r: def.r * 1.3,
+    hp: def.hp * 2.2 * tScale,
+    maxHp: def.hp * 2.2 * tScale,
+    dmg: def.dmg * 1.6 * (1 + State.time*0.0018),
+    spd: def.spd * 1.15 * spdScale(),
+    xp: def.xp * 2,
     col: def.col, glow: def.glow,
     ai: def.ai,
     age:0, hit:0, stagger:0,
@@ -2117,8 +2160,8 @@ function spawnBoss(){
   };
   State.enemies.push(b);
   State.bossActive = b;
-  showBanner(def.name, 'appelle-le par son nom', 2.2, 'boss');
-  AUD.boss(); flash('#6a0a1a', 0.35); addShake(12);
+  showBanner('BOSS FINAL', def.name + ' · le jugement', 3.0, 'boss');
+  AUD.boss(); flash('#6a0a1a', 0.7); addShake(20); slowmo(0.6);
 }
 
 /* ============================================================
@@ -2327,26 +2370,39 @@ function killEnemy(e){
     enterBloodlust();
   }
   if(e.boss){
-    AUD.dead(); addShake(14); flash('#ffd9a8', 0.4); slowmo(0.5);
-    showBanner('ABATTU', e.bossDef.name.toLowerCase()+' est tombé', 1.8);
+    const isFinal = !!e.isFinal;
+    const isMini  = !!e.isMini;
+    AUD.dead();
+    addShake(isFinal?20:12);
+    flash(isFinal?'#ffd9a8':'#ffb3ff', isFinal?0.55:0.3);
+    slowmo(isFinal?0.65:0.4);
+    showBanner(
+      isFinal ? 'BOSS FINAL ABATTU' : 'MINI-BOSS VAINCU',
+      e.bossDef.name.toLowerCase() + ' est tombé',
+      isFinal?2.4:1.8
+    );
     State.bossActive = null;
     State.bossKillsRun++;
-    State.player.hp = Math.min(State.player.maxHp, State.player.hp + State.player.maxHp*0.3);
-    State.xp += 20;
-    // Déverrouille la map associée à ce boss
-    const bId = e.bossDef.id;
-    const defeated = SAVE.data.bossesDefeated || [];
-    if(!defeated.includes(bId)){
-      defeated.push(bId);
-      SAVE.data.bossesDefeated = defeated;
-      for(const [mk, md] of Object.entries(MAPS)){
-        if(md.unlockBoss === bId){
-          setTimeout(()=>showBanner('ARÈNE DÉVERROUILLÉE', md.name, 2.4), 2200);
+    // Soin : 15% pour mini-boss, 40% pour boss final
+    const healFrac = isFinal ? 0.40 : 0.15;
+    State.player.hp = Math.min(State.player.maxHp, State.player.hp + State.player.maxHp*healFrac);
+    grantXp(isFinal ? 80 : 20);
+    // Déverrouillage de carte : UNIQUEMENT sur le boss final
+    if(isFinal){
+      const bId = e.bossDef.id;
+      const defeated = SAVE.data.bossesDefeated || [];
+      if(!defeated.includes(bId)){
+        defeated.push(bId);
+        SAVE.data.bossesDefeated = defeated;
+        for(const [mk, md] of Object.entries(MAPS)){
+          if(md.unlockBoss === bId){
+            setTimeout(()=>showBanner('ARÈNE DÉVERROUILLÉE', md.name, 2.4), 2200);
+          }
         }
+        SAVE.save();
       }
-      SAVE.save();
     }
-    // Propose un pacte sacrificiel (choix parmi 3)
+    // Pacte sacrificiel après chaque boss (mini et final)
     setTimeout(openPactChoice, 700);
   } else if(e.elite){
     addShake(4); flash('#ffb3ff', 0.18);
@@ -2451,8 +2507,8 @@ function openPactChoice(){
 // XP CURVE — courbe volontairement douce : on veut des level up fréquents
 // surtout dans les 5 premières minutes pour construire un build rapidement.
 function xpForLevel(l){
-  // Courbe étirée : ~level 22 en 10 min sur crypte, plus sur maps dures via xpMult.
-  return Math.floor(6 + l*5 + Math.pow(l, 1.25));
+  // Courbe lente : ~level 10 à 3 min, ~level 22-25 à 10 min sur crypte.
+  return Math.floor(50 + l*25 + Math.pow(l, 2.3));
 }
 function grantXp(amount){
   const xpMult = State.mapDef?.xpMult || 1;
@@ -5677,6 +5733,44 @@ const ISOSPR = {
     ctx.beginPath(); ctx.arc(-r*0.1,-r*1.8,1.3,0,TAU); ctx.fill();
     ctx.beginPath(); ctx.arc( r*0.1,-r*1.8,1.3,0,TAU); ctx.fill();
     ctx.shadowBlur=0;
+  },
+
+  // Placeholder mini-boss — sera remplacé par des sprites dédiés
+  miniboss(ctx, e){
+    const r = e.r; const t = State.time;
+    const pulse = 1 + 0.12*Math.sin(t*3);
+    // Ombre
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    ctx.beginPath(); ctx.ellipse(0, 0, r*1.5, r*0.55, 0, 0, TAU); ctx.fill();
+    // Corps hexagonal pulsant
+    const sides = 6;
+    ctx.shadowBlur=22; ctx.shadowColor=e.glow;
+    ctx.fillStyle=e.col;
+    ctx.strokeStyle=e.glow; ctx.lineWidth=2.5;
+    ctx.beginPath();
+    for(let i=0;i<sides;i++){
+      const a=-Math.PI/2+i*TAU/sides;
+      const rx=Math.cos(a)*r*pulse*1.1, ry=Math.sin(a)*r*pulse*0.85-r*1.2;
+      i===0 ? ctx.moveTo(rx,ry) : ctx.lineTo(rx,ry);
+    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur=0;
+    // Yeux brillants
+    const ep = 0.6+Math.sin(t*6)*0.4;
+    ctx.fillStyle=e.glow; ctx.shadowBlur=12; ctx.shadowColor=e.glow;
+    ctx.globalAlpha=ep;
+    ctx.beginPath(); ctx.arc(-r*0.28,-r*1.2,r*0.18,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc( r*0.28,-r*1.2,r*0.18,0,TAU); ctx.fill();
+    ctx.globalAlpha=1; ctx.shadowBlur=0;
+    // Couronne de crocs
+    for(let i=0;i<5;i++){
+      const a=-Math.PI*0.7+i*Math.PI*1.4/4;
+      const bx=Math.cos(a)*r*0.9, by=Math.sin(a)*r*0.9-r*1.2;
+      ctx.fillStyle=e.glow;
+      ctx.beginPath();
+      ctx.moveTo(bx-2,by); ctx.lineTo(bx,by-6); ctx.lineTo(bx+2,by);
+      ctx.closePath(); ctx.fill();
+    }
   }
 };
 
@@ -5747,24 +5841,25 @@ function drawEnemyIso(e){
   ctx.save();
   // Sélectionne le style d'animation selon le type d'ennemi
   let animStyle = 'humanoid';
-  if(e.boss || e.kind === 'brute') animStyle = 'heavy';
+  if(e.isMini) animStyle = 'heavy';
+  else if(e.boss || e.kind === 'brute') animStyle = 'heavy';
   else if(e.kind === 'ombre') animStyle = 'flying';
   const anim = animOffset(e, animStyle);
   ctx.translate(s.x, s.y + anim.bob);
   ctx.rotate(anim.tilt);
   ctx.scale(anim.squashX, anim.squashY);
-  const baseId = e.boss ? ('boss_' + e.bossDef.id) : ('enemy_' + e.kind);
-  const h = PNG_TARGET_H[baseId] || 100;
-  // Sprite directionnel basé sur la vélocité réelle (vx/vy >> 10 donc le seuil passe)
+  const baseId = e.isMini ? ('miniboss_'+e.bossDef.id) : (e.boss ? ('boss_' + e.bossDef.id) : ('enemy_' + e.kind));
+  const h = PNG_TARGET_H[baseId] || (e.isMini ? 110 : 100);
   const eDir = getCharDir(e.vx||0, e.vy||0);
   if(!drawPNGSprite(baseId + '_' + eDir, h) && !drawPNGSprite(baseId, h)){
     ctx.scale(ISO.spriteScale, ISO.spriteScale);
-    const drawer = e.boss
+    const drawer = e.isMini
+      ? (ISOSPR['miniboss_'+e.bossDef.id] || ISOSPR.miniboss)
+      : e.boss
       ? (ISOSPR['boss_'+e.bossDef.id] || ISOSPR.boss_alpha)
       : (ISOSPR[e.kind] || ISOSPR.traqueur);
     drawer(ctx, e);
   }
-  // Hit flash blanc (overlay)
   if(e.hit>0){
     ctx.globalCompositeOperation='source-atop';
     ctx.fillStyle = `rgba(255,255,255,${Math.min(0.75, e.hit*6)})`;
@@ -5777,6 +5872,16 @@ function drawEnemyIso(e){
     const w = e.r*2.4, pct = clamp(e.hp/e.maxHp,0,1);
     ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(s.x-w/2, s.y-e.r*3-4, w, 3);
     ctx.fillStyle = '#ff8ea0'; ctx.fillRect(s.x-w/2, s.y-e.r*3-4, w*pct, 3);
+  }
+  // Barre de vie mini-boss — visible au-dessus de l'entité
+  if(e.isMini){
+    const w = 60, pct = clamp(e.hp/e.maxHp,0,1);
+    ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(s.x-w/2, s.y-e.r*2.8-8, w, 6);
+    ctx.fillStyle=e.glow; ctx.fillRect(s.x-w/2, s.y-e.r*2.8-8, w*pct, 6);
+    ctx.strokeStyle='#ffffff44'; ctx.lineWidth=0.5;
+    ctx.strokeRect(s.x-w/2, s.y-e.r*2.8-8, w, 6);
+    ctx.fillStyle='#ffffffcc'; ctx.font='bold 8px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(e.bossDef.name, s.x, s.y-e.r*2.8-12);
   }
 }
 
@@ -6948,7 +7053,9 @@ function resetRun(){
   State.dashCd = 0; State.dashTime = 0; State.iframes = 0;
   State.shake = 0; State.flashLife = 0; State.slowmoLife = 0;
   // Timers initiaux rééquilibrés : première minute plus calme pour poser un build.
-  State.spawnTimer = 1.2; State.eliteTimer = 32; State.bossTimer = 150; State.bossIndex = 0; State.bossActive = null;
+  State.spawnTimer = 1.2; State.eliteTimer = 32;
+  State.bossTimer = 180; State.bossIndex = 0; State.bossActive = null;
+  State.miniBossCount = 0; State.finalBossSpawned = false;
   State.evoOffered = {};
   State.xpPulse = null; State.lvupQueue = 0;
   State.player = makePlayer(State.char);
