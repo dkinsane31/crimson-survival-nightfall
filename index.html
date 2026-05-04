@@ -2356,6 +2356,7 @@ function possibleUpgrades(){
     else if(passId==='atkSpd') ok = (State.passCounts.atkSpd||0) >= threshold || (State.passCounts.cd||0) + (State.passCounts.atkSpd||0) >= threshold;
     else if(passId==='area') ok = (State.passCounts.area||0) >= threshold;
     else if(passId==='cd') ok = (State.passCounts.cd||0)+(State.passCounts.atkSpd||0) >= threshold;
+    else if(passId==='lifestl') ok = (State.passCounts.lifestl||0) >= threshold;
     if(ok){
       const edef = WEAPONS[evoKey];
       out.push({ kind:'evo', evoKey, baseKey, label:edef.name, desc:edef.desc, icn:edef.icn, w:99 });
@@ -2380,6 +2381,15 @@ function pickOffers(){
     out.push(sigs[Math.floor(Math.random()*sigs.length)]);
   }
   if(combos.length && out.length<3) out.push(combos[0]);
+  // Garantit une nouvelle arme si le joueur en a moins de 4 (sinon jamais vues avec le pool de passifs)
+  if(out.length<3 && State.weapons.length < 4){
+    const newWeps = rest.filter(o=>o.kind==='newWeapon');
+    if(newWeps.length){
+      const pick = newWeps[Math.floor(Math.random()*newWeps.length)];
+      out.push(pick);
+      rest.splice(rest.indexOf(pick),1);
+    }
+  }
   while(out.length<3 && rest.length){
     const pick = weightedChoice(rest);
     out.push(pick);
@@ -6039,7 +6049,7 @@ function updateProjectiles(dt){
       for(const e of State.enemies){
         if(e.dead) continue;
         if(len(e.x-z.x, e.y-z.y) < z.r + e.r*0.5){
-          damageEnemy(e, z.dmg, z.x, z.y, 'sceau');
+          damageEnemy(e, z.dmg, z.x, z.y, z.kind||'zone');
         }
       }
     }
