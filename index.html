@@ -296,6 +296,31 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
   color:#ff8ea0; pointer-events:none; z-index:5;
 }
 
+/* ===== MALÉDICTIONS — sélection sur charScreen ===== */
+.curse-btn{display:inline-flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 10px;border:1px solid rgba(180,200,230,.2);border-radius:4px;
+  background:rgba(10,14,25,.7);color:var(--ink2);cursor:pointer;font-size:11px;
+  letter-spacing:.08em;text-transform:uppercase;transition:all .15s;min-width:90px}
+.curse-btn:hover{border-color:var(--red);color:#fff}
+.curse-btn.active{border-color:var(--red);background:rgba(70,8,18,.55);color:#ff7a8a;
+  box-shadow:0 0 14px rgba(255,42,68,.2) inset}
+.curse-btn .c-icn{font-size:18px}
+.curse-btn .c-bonus{color:var(--gold);font-size:10px;letter-spacing:.1em}
+
+/* ===== DÉFIS & SUCCÈS ===== */
+.defi-row{display:flex;align-items:center;gap:10px;padding:8px 10px;
+  border-bottom:1px solid rgba(180,200,230,.08);border-radius:3px}
+.defi-row.done{opacity:0.55}
+.defi-row .d-icn{font-size:20px;min-width:26px;text-align:center}
+.defi-row .d-info{flex:1}
+.defi-row .d-name{font-size:12px;color:#fff;letter-spacing:.08em}
+.defi-row .d-desc{font-size:10px;color:var(--muted);letter-spacing:.06em;margin-top:2px}
+.defi-row .d-reward{font-size:11px;color:var(--gold);min-width:55px;text-align:right;white-space:nowrap}
+.defi-row .d-check{font-size:16px;min-width:22px;text-align:center;color:#6fb3ff}
+.defi-cat{font-family:"Cinzel",serif;font-size:11px;letter-spacing:.22em;
+  color:var(--ink2);text-transform:uppercase;padding:8px 10px 3px;
+  border-bottom:1px solid rgba(180,200,230,.14);margin-top:4px}
+
 /* ===== ÉCRAN JALON (milestone) ===== */
 #milestoneScreen{
   position:absolute;inset:0;display:none;align-items:center;justify-content:center;
@@ -379,6 +404,13 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
     <div id="waveIndicator">
       <span id="waveName">HORDE</span> · <span id="waveCount">0</span> ennemis restants
     </div>
+    <!-- Badge d'événement de run -->
+    <div id="mapRunEventBadge" style="display:none;position:absolute;top:10px;left:50%;
+      transform:translateX(-50%);background:rgba(10,14,25,.88);border:1px solid rgba(180,200,230,.25);
+      border-radius:16px;padding:4px 14px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+      color:#e7ecf5;pointer-events:none;backdrop-filter:blur(4px);white-space:nowrap;z-index:4">
+      <span id="mreIcn"></span><span id="mreName" style="margin-left:5px"></span>
+    </div>
     <div id="comboLbl" style="position:absolute;top:50%;right:16px;transform:translateY(-50%);pointer-events:none;text-align:right;display:none">
       <div style="font-family:Cinzel,serif;font-size:46px;color:#ffd9a8;text-shadow:0 0 16px #ff2a44,0 0 30px #ff2a44;letter-spacing:.08em"><span id="comboNum">3</span>×</div>
       <div style="font-size:10px;color:var(--cold);letter-spacing:.2em;text-transform:uppercase">COMBO</div>
@@ -403,6 +435,7 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
       <div>
         <button class="btn primary" id="btnPlay">Jouer</button>
         <button class="btn" id="btnSanctum">Sanctum ⬢</button>
+        <button class="btn" id="btnDefis">Défis ⚔</button>
         <button class="btn ghost" id="btnMute">Son : ON</button>
       </div>
       <div id="metaLine" style="margin-top:22px;font-size:12px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase"></div>
@@ -428,7 +461,12 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
       <div class="subtitle">// Sélection de l'élite //</div>
       <h2 class="title" style="font-size:26px;margin-bottom:20px">CHOISIS TON SANG</h2>
       <div class="chars" id="chars"></div>
-      <div style="margin-top:18px">
+      <div id="cursePanel" style="margin:12px 0 0;padding:10px 0;border-top:1px solid rgba(180,200,230,.1)">
+        <div style="color:var(--muted);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px">✦ Malédictions optionnelles · bonus d'éclats</div>
+        <div id="curseList" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+        <div id="curseBonusLbl" style="font-size:12px;color:var(--gold);margin-top:6px;min-height:16px"></div>
+      </div>
+      <div style="margin-top:14px">
         <button class="btn" id="btnBackTitle">Retour</button>
         <button class="btn primary" id="btnStart">Entrer dans la nuit →</button>
       </div>
@@ -464,6 +502,19 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
       <div class="lu-title" style="font-size:28px">POUVOIR ÉTERNEL</div>
       <div style="color:var(--ink2);font-size:13px;margin-bottom:18px">Ce pouvoir te suivra à jamais. Choisis bien.</div>
       <div class="upgrades" id="sermentList"></div>
+    </div>
+  </div>
+
+  <!-- Défis & Succès -->
+  <div class="overlay" id="defisScreen" style="display:none">
+    <div class="card" style="max-width:720px">
+      <div class="subtitle">// Épreuves de sang //</div>
+      <h2 class="title" style="font-size:26px;margin-bottom:6px">DÉFIS & SUCCÈS</h2>
+      <div style="color:var(--muted);font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:14px">accomplis les épreuves · gagne des éclats d'ombre</div>
+      <div id="defisList" style="max-height:400px;overflow-y:auto;text-align:left"></div>
+      <div style="margin-top:16px">
+        <button class="btn" id="btnCloseDefis">Retour</button>
+      </div>
     </div>
   </div>
 
@@ -934,7 +985,9 @@ const SAVE = {
     shards:0,                                 // éclats d'ombre (monnaie meta)
     permaActive:[],                           // ids de PERMA actifs (max 3)
     permaOwned:[],                            // ids achetés
-    bossesDefeated:[]                         // boss vaincus (unlock maps)
+    bossesDefeated:[],                        // boss vaincus (unlock maps)
+    challengesDone:[],                        // ids des défis accomplis
+    totalRuns:0                               // total runs joués
   },
   load(){
     try{ const s=localStorage.getItem(this.key); if(s) this.data = Object.assign(this.data, JSON.parse(s)); }catch(e){}
@@ -947,12 +1000,20 @@ const SAVE = {
       this.data.best = { time:runStats.time, level:runStats.level, kills:runStats.kills, score };
     }
     this.data.totalKills += runStats.kills;
-    // Éclats d'ombre gagnés : kills/12 + minutes + niveau + bosses vaincus*25 + pic de combo/3
-    const shards = Math.floor(runStats.kills/12) + Math.floor(runStats.time/60) + runStats.level
+    this.data.totalRuns = (this.data.totalRuns||0) + 1;
+    // Éclats d'ombre gagnés : kills/12 + minutes + niveau + bosses*25 + combo/3, bonus malédictions
+    const curseBonus = (runStats.curses||[]).reduce((s, id) => {
+      const c = (typeof CURSES !== 'undefined') ? CURSES.find(c=>c.id===id) : null;
+      return s + (c ? c.shardBonus : 0);
+    }, 0);
+    const baseShards = Math.floor(runStats.kills/12) + Math.floor(runStats.time/60) + runStats.level
       + (runStats.bossKills||0)*25 + Math.floor((runStats.comboPeak||0)/3);
+    const shards = Math.floor(baseShards * (1 + curseBonus));
     this.data.shards = (this.data.shards||0) + shards;
     runStats.shardsEarned = shards;
     this.save();
+    // Vérification des défis (appelé en dehors du SAVE pour accès aux fonctions globales)
+    if(typeof checkChallenges === 'function') setTimeout(()=>checkChallenges(runStats), 200);
     return score;
   }
 };
@@ -1114,6 +1175,90 @@ const SHOP_ITEMS = [
   { id:'coeur_boss',     name:'Cœur de Boss',          desc:'+1 charge de dash ce run',              cost:130, cat:'rare',    icn:'💎' },
   { id:'relique_garante',name:'Relique Garantie',      desc:'Offre une relique sol immédiatement',   cost:110, cat:'rare',    icn:'🔮' },
   { id:'resurrection',   name:'Résurrection',          desc:'Reviens à 30% PV à la prochaine mort',  cost:150, cat:'rare',    icn:'☠' },
+];
+
+/* ---- ÉVÉNEMENTS DE RUN — modificateur tiré au début de chaque run ---- */
+const MAP_RUN_EVENTS = [
+  { id:'blessing_sang',  name:'Bénédiction du Sang',  icn:'🩸', col:'#ff4466',
+    desc:'+25% XP gagné ce run', xpMult:1.25 },
+  { id:'nuit_genereuse', name:'Nuit Généreuse',        icn:'🪙', col:'#d9b26a',
+    desc:'Boutique : prix -30% ce run', shopDiscount:0.70 },
+  { id:'pacte_ames',     name:'Pacte des Âmes',        icn:'👻', col:'#9b6bff',
+    desc:'Ennemis +20% PV · XP +35%', xpMult:1.35, enemyHpMult:1.20 },
+  { id:'nuit_chasse',    name:'Nuit de Chasse',        icn:'🐺', col:'#ff8800',
+    desc:'Premières vagues 60s plus tôt', earlyWaves:60 },
+  { id:'terrain_maudit', name:'Terrain Maudit',        icn:'💀', col:'#6a7286',
+    desc:'-12% vitesse de déplacement', speedMult:0.88 },
+  { id:'boss_enrage',    name:'Boss Enragé',           icn:'👿', col:'#ff2a44',
+    desc:'Boss +50% PV · +25% dégâts', bossHpMult:1.50, bossDmgMult:1.25 },
+  { id:'ruee_or',        name:'Ruée vers l\'Or',       icn:'💰', col:'#d9b26a',
+    desc:'+40% or gagné ce run', goldMult:1.40 },
+  { id:'sang_pour_sang', name:'Sang pour Sang',        icn:'❤', col:'#ff2a44',
+    desc:'+1 PV par kill · Régénération inactive', killHealMRE:1, noRegenMRE:true },
+  { id:'horde_infinie',  name:'Horde Infinie',         icn:'🌊', col:'#ff4444',
+    desc:'+40% taux de spawn', spawnMult:1.40 },
+  { id:'arene_benie',    name:'Arène Bénie',           icn:'✨', col:'#6fb3ff',
+    desc:'Double reliques sur la map', doubleRelics:true },
+];
+
+/* ---- MALÉDICTIONS — handicaps optionnels, bonus d'éclats ---- */
+const CURSES = [
+  { id:'chair_fragile', name:'Chair Fragile',      icn:'💔', shardBonus:0.20,
+    desc:'-30% PV max · +20% éclats', maxHpMult:0.70 },
+  { id:'frenetique',    name:'Frénésie Éternelle', icn:'💨', shardBonus:0.30,
+    desc:'Ennemis +60% vitesse · +30% éclats', enemySpdMult:1.60 },
+  { id:'silence_noir',  name:'Silence Noir',       icn:'🚫', shardBonus:0.15,
+    desc:'Régénération désactivée · +15% éclats', noRegen:true },
+  { id:'prix_sang',     name:'Prix du Sang',       icn:'⚰', shardBonus:0.20,
+    desc:'Chaque kill coûte 3 PV · +20% éclats', killCostHp:3 },
+  { id:'hordes_fin',    name:'Hordes Sans Fin',    icn:'🌊', shardBonus:0.35,
+    desc:'×2 taux de spawn · +35% éclats', spawnMult:2.0 },
+  { id:'sans_abri',     name:'Sans Abri',          icn:'🏚', shardBonus:0.10,
+    desc:'Boutique inaccessible · +10% éclats', noShop:true },
+  { id:'aveugle',       name:'Aveuglement',        icn:'👁', shardBonus:0.15,
+    desc:'Vision réduite · +15% éclats', visionMult:0.60 },
+];
+
+/* ---- DÉFIS & SUCCÈS ---- */
+const CHALLENGES = [
+  { id:'first_blood',    name:'Première Nuit',          icn:'🩸', shards:30, cat:'global',
+    desc:'Survivre au moins 1 minute', check:(r)=> r.time >= 60 },
+  { id:'endurance',      name:'Survivant de l\'Ombre',  icn:'⏱',  shards:40, cat:'global',
+    desc:'Survivre 10 minutes en un run', check:(r)=> r.time >= 600 },
+  { id:'massacre',       name:'Bain de Sang',           icn:'⚔',  shards:50, cat:'global',
+    desc:'500 kills en un seul run', check:(r)=> r.kills >= 500 },
+  { id:'veteran',        name:'Élite de Nuit',          icn:'🌙',  shards:40, cat:'global',
+    desc:'Atteindre le niveau 20', check:(r)=> r.level >= 20 },
+  { id:'maudit',         name:'Âme Damnée',             icn:'💀',  shards:60, cat:'global',
+    desc:'Jouer avec 2 malédictions ou plus', check:(r)=> (r.curses||[]).length >= 2 },
+  { id:'collectionneur', name:'Chasseur de Reliques',   icn:'🔮',  shards:45, cat:'global',
+    desc:'Ramasser 4 reliques en un run', check:(r)=> (r.relicsCollected||0) >= 4 },
+  { id:'bosseur',        name:'Tueur de Légendes',      icn:'👿',  shards:50, cat:'global',
+    desc:'Tuer les 3 mini-boss dans un run', check:(r)=> r.bossKills >= 3 },
+  { id:'db_damage',      name:'Carnage Absolu',         icn:'⚔',  shards:40, cat:'deathborne',
+    desc:'Infliger 25 000 dégâts en un run', check:(r)=> r.damage >= 25000 && r.char==='deathborne' },
+  { id:'db_combo',       name:'Maître du Flux',         icn:'🔥',  shards:35, cat:'deathborne',
+    desc:'Atteindre un combo pic ×15', check:(r)=> r.comboPeak >= 15 && r.char==='deathborne' },
+  { id:'db_final',       name:'Jugement Ultime',        icn:'💫',  shards:50, cat:'deathborne',
+    desc:'Tuer le boss final avec Deathborne', check:(r)=> r.bossKills >= 4 && r.char==='deathborne' },
+  { id:'sl_time',        name:'Ombre Fugace',           icn:'🌑',  shards:40, cat:'selene',
+    desc:'Survivre 8 minutes avec Selene', check:(r)=> r.time >= 480 && r.char==='selene' },
+  { id:'sl_combo',       name:'Lame Éclair',            icn:'⚡',  shards:35, cat:'selene',
+    desc:'Atteindre un combo pic ×20 avec Selene', check:(r)=> r.comboPeak >= 20 && r.char==='selene' },
+  { id:'sl_final',       name:'Tranchée Noire',         icn:'🗡',  shards:50, cat:'selene',
+    desc:'Tuer le boss final avec Selene', check:(r)=> r.bossKills >= 4 && r.char==='selene' },
+  { id:'hy_kills',       name:'Alpha Suprême',          icn:'🐺',  shards:40, cat:'hybride',
+    desc:'400 kills en un run avec Hybride', check:(r)=> r.kills >= 400 && r.char==='hybride' },
+  { id:'hy_tank',        name:'Muraille de Sang',       icn:'🛡',  shards:45, cat:'hybride',
+    desc:'Survivre 10 minutes avec Hybride', check:(r)=> r.time >= 600 && r.char==='hybride' },
+  { id:'hy_final',       name:'Seigneur Infernal',      icn:'🜚',  shards:50, cat:'hybride',
+    desc:'Tuer le boss final avec Hybride', check:(r)=> r.bossKills >= 4 && r.char==='hybride' },
+  { id:'nc_horde',       name:'Armée des Ombres',       icn:'💀',  shards:40, cat:'necro',
+    desc:'300 kills en un run avec Nécro', check:(r)=> r.kills >= 300 && r.char==='necro' },
+  { id:'nc_familiar',    name:'Seigneur des Âmes',      icn:'🜔',  shards:35, cat:'necro',
+    desc:'Invoquer 20 familiers en un run', check:(r)=> (r.familiarsSummoned||0) >= 20 && r.char==='necro' },
+  { id:'nc_final',       name:'Maître des Morts',       icn:'🌑',  shards:50, cat:'necro',
+    desc:'Tuer le boss final avec Nécro', check:(r)=> r.bossKills >= 4 && r.char==='necro' },
 ];
 
 /* ---- PROPS DE MAP ----
@@ -1442,6 +1587,7 @@ const WEAPONS = {
         kind:'goule'
       };
       State.familiars.push(f);
+      State.familiarsSummonedRun = (State.familiarsSummonedRun||0) + 1;
       spawnPart(f.x, f.y, '#9b6bff', 0.6);
     }
   },
@@ -1465,6 +1611,7 @@ const WEAPONS = {
         hitCd:0, angle:0, age:0, dead:false,
         col:'#2a0a2a', glow:'#ff7ac0', kind:'chauvesouris'
       });
+      State.familiarsSummonedRun = (State.familiarsSummonedRun||0) + 1;
       spawnPart(p.x, p.y, '#ff7ac0', 0.5);
     }
   },
@@ -1490,6 +1637,7 @@ const WEAPONS = {
         hitCd:0, angle:0, age:0, dead:false,
         col:'#14162a', glow:'#6fb3ff', kind:'golem'
       });
+      State.familiarsSummonedRun = (State.familiarsSummonedRun||0) + 1;
       spawnPart(p.x, p.y, '#6fb3ff', 0.7);
       addShake(4);
     }
@@ -1515,6 +1663,7 @@ const WEAPONS = {
         hitCd:0, angle:0, age:0, dead:false,
         col:'#0a0f18', glow:'#6a3aca', kind:'corbeau'
       });
+      State.familiarsSummonedRun = (State.familiarsSummonedRun||0) + 1;
       spawnPart(p.x, p.y, '#6a3aca', 0.6);
     }
   },
@@ -2181,8 +2330,9 @@ function doSpawn(dt){
   }
 
   // Vagues nocturnes — surgissent à des instants fixes, une seule fois par run
+  const earlyOffset = State.mapRunEvent?.earlyWaves || 0;
   for(const nw of NIGHT_WAVES){
-    if(!State.nightWavesDone.has(nw.at) && State.time >= nw.at && !State.bossActive){
+    if(!State.nightWavesDone.has(nw.at) && State.time >= nw.at - earlyOffset && !State.bossActive){
       State.nightWavesDone.add(nw.at);
       State.activeNightWave = { name: nw.name, total: nw.count, spawned: nw.count };
       showBanner(nw.name, nw.sub, 3.0, 'boss');
@@ -2199,7 +2349,9 @@ function doSpawn(dt){
   if(State.bossActive) return;
   State.spawnTimer -= dt;
   if(State.spawnTimer<=0){
-    const spawnMul = State.keyHorde?.def.spawnMult || 1;
+    let spawnMul = State.keyHorde?.def.spawnMult || 1;
+    if(State.mapRunEvent?.spawnMult) spawnMul *= State.mapRunEvent.spawnMult;
+    if((State.curses||[]).includes('hordes_fin')) spawnMul *= 2.0;
     // Burst de base (phase 0-2min ≈ 1-5, 2-5min ≈ 5-11, 5+ ≈ 11+)
     const burst = Math.max(1, Math.round((1 + Math.floor(State.time/28)) * spawnMul));
     for(let i=0;i<burst;i++){
@@ -2273,13 +2425,15 @@ function spawnMiniBoss(){
   const def = MINI_BOSS_DEF[State.miniBossCount % MINI_BOSS_DEF.length];
   const pos = randomSpawnPos();
   const tScale = 1 + State.time * 0.002;
+  const bossHpM = State.mapRunEvent?.bossHpMult || 1;
+  const bossDmgM = State.mapRunEvent?.bossDmgMult || 1;
   const b = {
     kind:'miniboss', boss:true, bossDef:def, elite:true, dead:false, isMini:true,
     x:pos.x, y:pos.y, vx:0, vy:0,
     r: def.r,
-    hp: def.hp * tScale,
-    maxHp: def.hp * tScale,
-    dmg: def.dmg * (1 + State.time*0.001),
+    hp: def.hp * tScale * bossHpM,
+    maxHp: def.hp * tScale * bossHpM,
+    dmg: def.dmg * (1 + State.time*0.001) * bossDmgM,
     spd: def.spd * spdScale(),
     xp: 25 + State.miniBossCount * 15,
     col: def.col, glow: def.glow,
@@ -2301,13 +2455,15 @@ function spawnFinalBoss(){
   State.bossIndex++;
   const pos = randomSpawnPos();
   const tScale = 1 + State.time * 0.003;
+  const bossHpM = State.mapRunEvent?.bossHpMult || 1;
+  const bossDmgM = State.mapRunEvent?.bossDmgMult || 1;
   const b = {
     kind:'boss', boss:true, bossDef:def, elite:true, dead:false, isFinal:true,
     x:pos.x, y:pos.y, vx:0, vy:0,
     r: def.r * 1.3,
-    hp: def.hp * 2.2 * tScale,
-    maxHp: def.hp * 2.2 * tScale,
-    dmg: def.dmg * 1.6 * (1 + State.time*0.0018),
+    hp: def.hp * 2.2 * tScale * bossHpM,
+    maxHp: def.hp * 2.2 * tScale * bossHpM,
+    dmg: def.dmg * 1.6 * (1 + State.time*0.0018) * bossDmgM,
     spd: def.spd * 1.15 * spdScale(),
     xp: def.xp * 2,
     col: def.col, glow: def.glow,
@@ -2398,6 +2554,22 @@ function recomputePassives(){
   for(const [sid, count] of Object.entries(_charSerments)){
     const sdef = (SERMENTS[State.char]||[]).find(s=>s.id===sid);
     if(sdef && count > 0) sdef.apply(pas, count);
+  }
+  // Événement de run (modificateur tiré au début)
+  const mre = State.mapRunEvent;
+  if(mre){
+    if(mre.xpMult)       pas.xpMult = (pas.xpMult||1) * mre.xpMult;
+    if(mre.speedMult)    pas.speedMult *= mre.speedMult;
+    if(mre.enemyHpMult)  pas.enemyHpMult = (pas.enemyHpMult||1) * mre.enemyHpMult;
+    if(mre.killHealMRE)  pas.killHealMRE = (pas.killHealMRE||0) + mre.killHealMRE;
+    if(mre.noRegenMRE)   pas.regen = 0;
+  }
+  // Malédictions actives ce run
+  for(const cid of (State.curses||[])){
+    const curse = CURSES.find(c=>c.id===cid); if(!curse) continue;
+    if(curse.maxHpMult)    pas.maxHp *= curse.maxHpMult;
+    if(curse.enemySpdMult) pas.enemySpdMult = (pas.enemySpdMult||1) * curse.enemySpdMult;
+    if(curse.noRegen)      pas.regen = 0;
   }
   // Jalons de niveau débloqués
   const _msKey = State.char;
@@ -2557,6 +2729,14 @@ function killEnemy(e){
     }
   }
   State.kills++;
+  // Événement de run — Sang pour Sang : +1 PV par kill
+  if(State.pas.killHealMRE && !e.boss && State.player){
+    State.player.hp = Math.min(State.player.maxHp, State.player.hp + State.pas.killHealMRE);
+  }
+  // Malédiction Prix du Sang : chaque kill coûte 3 PV
+  if((State.curses||[]).includes('prix_sang') && !e.boss && State.player){
+    State.player.hp = Math.max(1, State.player.hp - 3);
+  }
   // Kill combo : incrémente et rafraîchit la fenêtre
   State.killCombo.count++;
   State.killCombo.timer = 2.5;
@@ -2670,6 +2850,7 @@ function updateRelics(dt){
       r.age += dt;
       if(Math.hypot(r.x-p.x, r.y-p.y) < 36){
         State.relicBuff = { id:r.def.id, timeLeft:r.def.dur };
+        State.relicsCollectedRun = (State.relicsCollectedRun||0) + 1;
         showBanner(r.def.name, r.def.desc, 1.6, 'evo');
         flash('#ffffff', 0.25);
         State.relics.splice(i, 1);
@@ -2683,6 +2864,7 @@ function updateRelics(dt){
       r.age += dt;
       if(Math.hypot(r.x-p.x, r.y-p.y) < 42){
         State.relicBuff = { id:r.def.id, timeLeft:r.def.dur };
+        State.relicsCollectedRun = (State.relicsCollectedRun||0) + 1;
         showBanner('RELIQUE ANCIENNE · '+r.def.name, r.def.desc, 1.8, 'evo');
         flash('#d9b26a', 0.35); addShake(6);
         State.mapRelics.splice(i, 1);
@@ -4898,7 +5080,8 @@ function initMapProps(){
 
 function initMapRelics(){
   State.mapRelics = [];
-  const count = 3 + Math.floor(Math.random() * 3); // 3 à 5 reliques
+  const base = 3 + Math.floor(Math.random() * 3);
+  const count = State.mapRunEvent?.doubleRelics ? base * 2 : base; // 3-5 ou 6-10 reliques
   for(let i = 0; i < count; i++){
     const def = RELIC_DEFS[Math.floor(Math.random() * RELIC_DEFS.length)];
     let x, y;
@@ -7190,6 +7373,16 @@ function updateHud(){
   const gl = document.getElementById('goldLbl');
   if(gl) gl.textContent = '🪙 ' + (State.gold||0);
 
+  // Badge d'événement de run
+  const mreb = document.getElementById('mapRunEventBadge');
+  if(mreb && State.mapRunEvent && State.phase==='playing'){
+    document.getElementById('mreIcn').textContent = State.mapRunEvent.icn;
+    document.getElementById('mreName').textContent = State.mapRunEvent.name;
+    mreb.style.borderColor = State.mapRunEvent.col;
+    mreb.style.display = 'block';
+  } else if(mreb){
+    mreb.style.display = 'none';
+  }
   // Indicateur d'événement actif
   const evEl  = document.getElementById('eventIndicator');
   const evBrd = document.getElementById('eventBorder');
@@ -7398,6 +7591,19 @@ function render(rawDt){
     ctx.restore();
   }
 
+  // Malédiction Aveuglement — vision réduite permanente
+  if(State.phase==='playing' && (State.curses||[]).includes('aveugle') && State.player){
+    const sv = worldToScreen(State.player.x, State.player.y);
+    const spxv = sv.x * DPR, spyv = sv.y * DPR;
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    const darkV = ctx.createRadialGradient(spxv, spyv, cvs.height*0.06, spxv, spyv, cvs.height*0.36);
+    darkV.addColorStop(0, 'rgba(0,0,0,0)');
+    darkV.addColorStop(1, 'rgba(0,0,0,0.70)');
+    ctx.fillStyle = darkV;
+    ctx.fillRect(0,0,cvs.width,cvs.height);
+    ctx.restore();
+  }
   // Obscurité — réduit la visibilité à un faisceau autour du joueur
   if(State.activeEvent?.id==='darkness' && State.player){
     const s = worldToScreen(State.player.x, State.player.y);
@@ -7431,8 +7637,14 @@ function render(rawDt){
    24. BOUTIQUE DU SANG
    ============================================================ */
 function openShop(){
+  // Malédiction Sans Abri : boutique inaccessible
+  if((State.curses||[]).includes('sans_abri')){
+    showBanner('SANS ABRI', 'la boutique est scellée par malédiction', 1.6);
+    return;
+  }
   State.running = false;
   State.phase = 'shop';
+  const shopDiscount = State.mapRunEvent?.shopDiscount || 1;
   document.getElementById('shopGoldAmt').textContent = State.gold || 0;
   // Pioche 3 items aléatoires distincts, sans réduits à ceux déjà achetés (sauf empilables)
   const pool = SHOP_ITEMS.filter(it => {
@@ -7450,13 +7662,15 @@ function openShop(){
   }
   const list = document.getElementById('shopList');
   list.innerHTML = picks.map(it => {
-    const cantAfford = (State.gold||0) < it.cost ? ' cant-afford' : '';
+    const cost = Math.ceil(it.cost * shopDiscount);
+    const cantAfford = (State.gold||0) < cost ? ' cant-afford' : '';
+    const strikeOrig = shopDiscount < 1 ? ` <span style="text-decoration:line-through;opacity:.4;font-size:10px">${it.cost}</span>` : '';
     return `<div class="shop-item${cantAfford}" data-id="${it.id}" onclick="buyShopItem('${it.id}')">
       <div class="si-cat">${it.cat}</div>
       <div class="si-icn">${it.icn}</div>
       <div class="si-name">${it.name}</div>
       <div class="si-desc">${it.desc}</div>
-      <div class="si-cost">🪙 ${it.cost}</div>
+      <div class="si-cost">🪙 ${cost}${strikeOrig}</div>
     </div>`;
   }).join('');
   document.getElementById('shopScreen').style.display = 'flex';
@@ -7470,8 +7684,9 @@ function closeShop(){
 
 function buyShopItem(id){
   const it = SHOP_ITEMS.find(i=>i.id===id); if(!it) return;
-  if((State.gold||0) < it.cost) return;
-  State.gold -= it.cost;
+  const cost = Math.ceil(it.cost * (State.mapRunEvent?.shopDiscount || 1));
+  if((State.gold||0) < cost) return;
+  State.gold -= cost;
   const p = State.player;
   switch(id){
     case 'fiole_sang':
@@ -7542,9 +7757,16 @@ function resetRun(){
   State.milestoneDone={}; State.milestoneQueue=[];
   State.turret=null; State.clone=null; State.warCryCd=undefined; State.fauxTimer=0; State.wolfSpawnCd=0;
   State.relics=[]; State.relicBuff=null;
-  State.gold=0; State.goldMult=1; State.shopBuffs={};
+  // Événement de run — tiré aléatoirement à chaque run
+  State.mapRunEvent = MAP_RUN_EVENTS[Math.floor(Math.random() * MAP_RUN_EVENTS.length)];
+  // Malédictions sélectionnées sur l'écran de personnage
+  State.curses = [...(pendingCurses||[])];
+  // Or : multiplicateur de base depuis l'événement de run
+  State.gold=0; State.goldMult = State.mapRunEvent?.goldMult || 1; State.shopBuffs={};
   State.essenceNoireBonus=0; State.lameAbsolueCount=0; State.extraRevenantChargesLeft=0;
   State.activeNightWave=null;
+  // Compteurs de run (défis)
+  State.relicsCollectedRun=0; State.familiarsSummonedRun=0;
   State.activeEvent=null; State.nextEventTime=85+Math.random()*55; State.eventXpTimer=0;
   State.nightWavesDone=new Set();
   State.weapons = [{ id: CHARS[State.char].starter, level:1, cdLeft:0.2 }];
@@ -7554,7 +7776,8 @@ function resetRun(){
   State.shake = 0; State.flashLife = 0; State.slowmoLife = 0;
   // Timers initiaux rééquilibrés : première minute plus calme pour poser un build.
   State.spawnTimer = 1.2; State.eliteTimer = 32;
-  State.bossTimer = 180; State.bossIndex = 0; State.bossActive = null;
+  State.bossTimer = State.mapRunEvent?.earlyWaves ? Math.max(60, 180 - State.mapRunEvent.earlyWaves) : 180;
+  State.bossIndex = 0; State.bossActive = null;
   State.miniBossCount = 0; State.finalBossSpawned = false;
   State.evoOffered = {};
   State.xpPulse = null; State.lvupQueue = 0;
@@ -7584,6 +7807,11 @@ function startGame(){
   State.phase='playing';
   State.running = true;
   showBanner('NUIT 1', 'la meute approche', 1.4);
+  // Annonce l'événement de run après le banner initial
+  if(State.mapRunEvent){
+    const mre = State.mapRunEvent;
+    setTimeout(()=>showBanner(mre.icn + ' ' + mre.name, mre.desc, 2.2, 'evo'), 1600);
+  }
 }
 
 function gameOver(){
@@ -7593,7 +7821,11 @@ function gameOver(){
   const run = { time:State.time, level:State.level, kills:State.kills,
                 damage:Math.floor(State.damage),
                 bossKills:State.bossKillsRun||0,
-                comboPeak:State.killCombo.peak||0 };
+                comboPeak:State.killCombo.peak||0,
+                char:State.char,
+                curses:[...(State.curses||[])],
+                relicsCollected:State.relicsCollectedRun||0,
+                familiarsSummoned:State.familiarsSummonedRun||0 };
   const score = SAVE.recordRun(run);
   State.runStats = Object.assign({ score }, run);
   const tpl = [
@@ -7621,6 +7853,11 @@ function gameOver(){
   if(sigs) parts.push('🜏 ' + sigs);
   if(pacts) parts.push('⚔ ' + pacts);
   if(passes) parts.push(passes);
+  if(State.mapRunEvent) parts.push(State.mapRunEvent.icn + ' ' + State.mapRunEvent.name);
+  if((State.curses||[]).length > 0){
+    const cnames = State.curses.map(id=>{ const c=CURSES.find(c=>c.id===id); return c?c.icn+' '+c.name:''; }).join(' · ');
+    parts.push('💀 ' + cnames);
+  }
   document.getElementById('overTag').innerHTML = parts.join('<br>') || 'Ta nuit s\'éteint en silence.';
   // flavor
   const flav = [
@@ -7644,6 +7881,100 @@ function togglePause(){
    25. MENUS & BINDINGS
    ============================================================ */
 /* ---- SANCTUM — achat et activation de perma-buffs ---- */
+/* ============================================================
+   DÉFIS & SUCCÈS / MALÉDICTIONS
+   ============================================================ */
+let pendingCurses = [];
+
+function openDefis(){
+  buildDefisScreen();
+  document.getElementById('titleScreen').style.display='none';
+  document.getElementById('defisScreen').style.display='flex';
+}
+function closeDefis(){
+  document.getElementById('defisScreen').style.display='none';
+  document.getElementById('titleScreen').style.display='flex';
+}
+function buildDefisScreen(){
+  const done = new Set(SAVE.data.challengesDone || []);
+  const cats = [
+    { key:'global',    label:'Défis Globaux',    col:'var(--ink2)' },
+    { key:'deathborne',label:'DEATHBORNE',        col:'#cfe0ff' },
+    { key:'selene',    label:'SELENE NOIRE',      col:'#ffb3b0' },
+    { key:'hybride',   label:'HYBRIDE RENÉGAT',   col:'#d9b0ff' },
+    { key:'necro',     label:'NÉCROMANCIEN',      col:'#9cd0ff' },
+  ];
+  const el = document.getElementById('defisList');
+  const completed = done.size;
+  let html = `<div style="font-size:11px;color:var(--gold);text-align:center;margin-bottom:10px;letter-spacing:.12em">${completed} / ${CHALLENGES.length} accomplis</div>`;
+  for(const cat of cats){
+    const group = CHALLENGES.filter(c=>c.cat===cat.key);
+    if(!group.length) continue;
+    html += `<div class="defi-cat" style="color:${cat.col}">${cat.label}</div>`;
+    for(const ch of group){
+      const isDone = done.has(ch.id);
+      html += `<div class="defi-row${isDone?' done':''}">
+        <div class="d-icn">${ch.icn}</div>
+        <div class="d-info">
+          <div class="d-name">${ch.name}</div>
+          <div class="d-desc">${ch.desc}</div>
+        </div>
+        <div class="d-reward">+${ch.shards} 💎</div>
+        <div class="d-check">${isDone ? '✓' : '·'}</div>
+      </div>`;
+    }
+  }
+  el.innerHTML = html;
+}
+function buildCursePanel(){
+  const el = document.getElementById('curseList');
+  if(!el) return;
+  el.innerHTML = CURSES.map(c=>{
+    const active = pendingCurses.includes(c.id);
+    return `<button class="curse-btn${active?' active':''}" onclick="toggleCurse('${c.id}')" title="${c.desc}">
+      <span class="c-icn">${c.icn}</span>
+      <span style="font-size:10px;line-height:1.2">${c.name}</span>
+      <span class="c-bonus">+${Math.round(c.shardBonus*100)}%</span>
+    </button>`;
+  }).join('');
+  updateCurseBonus();
+}
+function toggleCurse(id){
+  const idx = pendingCurses.indexOf(id);
+  if(idx >= 0) pendingCurses.splice(idx, 1);
+  else pendingCurses.push(id);
+  buildCursePanel();
+}
+function updateCurseBonus(){
+  const lbl = document.getElementById('curseBonusLbl');
+  if(!lbl) return;
+  if(pendingCurses.length === 0){ lbl.textContent = ''; return; }
+  const bonus = pendingCurses.reduce((s, id) => {
+    const c = CURSES.find(c=>c.id===id); return s + (c ? c.shardBonus : 0);
+  }, 0);
+  lbl.textContent = pendingCurses.length + ' malédiction' + (pendingCurses.length>1?'s':'') +
+    ' active' + (pendingCurses.length>1?'s':'') + ' · +' + Math.round(bonus*100) + '% éclats bonus';
+}
+function checkChallenges(runStats){
+  if(!SAVE.data.challengesDone) SAVE.data.challengesDone = [];
+  const done = new Set(SAVE.data.challengesDone);
+  const newOnes = [];
+  for(const ch of CHALLENGES){
+    if(done.has(ch.id)) continue;
+    try{ if(ch.check(runStats)){ done.add(ch.id); newOnes.push(ch); } }catch(e){}
+  }
+  if(newOnes.length > 0){
+    SAVE.data.challengesDone = [...done];
+    SAVE.data.shards = (SAVE.data.shards||0) + newOnes.reduce((s,c)=>s+c.shards,0);
+    SAVE.save();
+    let delay = 800;
+    for(const ch of newOnes){
+      setTimeout(()=>showBanner('DÉFI ACCOMPLI · '+ch.name, '+'+ch.shards+' éclats d\'ombre', 2.8, 'evo'), delay);
+      delay += 3200;
+    }
+  }
+}
+
 function openSanctum(){
   document.getElementById('titleScreen').style.display='none';
   document.getElementById('sanctumScreen').style.display='flex';
@@ -7793,6 +8124,7 @@ document.getElementById('btnMapNext').addEventListener('click', ()=>{
   document.getElementById('charScreen').style.display='flex';
   State.phase='charSelect';
   buildCharCards();
+  buildCursePanel();
 });
 btnMute.addEventListener('click', ()=>{
   AUD.init();
@@ -7803,6 +8135,8 @@ btnMute.addEventListener('click', ()=>{
 document.getElementById('btnSanctum').addEventListener('click', openSanctum);
 document.getElementById('btnCloseSanctum').addEventListener('click', closeSanctum);
 document.getElementById('btnCloseShop').addEventListener('click', closeShop);
+document.getElementById('btnDefis').addEventListener('click', openDefis);
+document.getElementById('btnCloseDefis').addEventListener('click', closeDefis);
 btnMute2.addEventListener('click', ()=>{
   const on = AUD.toggle();
   SAVE.data.muted = !on; SAVE.save();
@@ -7815,6 +8149,7 @@ btnBackTitle.addEventListener('click', ()=>{
 });
 btnAgain.addEventListener('click', ()=>{
   document.getElementById('over').style.display='none';
+  pendingCurses = []; // reset malédictions sur rejouer
   startGame();
 });
 btnMenu.addEventListener('click', ()=>{
@@ -7857,6 +8192,7 @@ State.map  = SAVE.data.lastMap  || 'crypte';
 State.mapDef = MAPS[State.map] || MAPS.crypte;
 buildMapCards();
 buildCharCards();
+buildCursePanel();
 refreshTitleMeta();
 btnMute.textContent = 'Son : ' + (SAVE.data.muted?'OFF':'ON');
 // Build env for title backdrop too
