@@ -805,3 +805,11 @@ Lecture intégrale du fichier `index.html` (7036 lignes) en plusieurs passes pou
 **Effets hookés dans** : damageEnemy (lameAbsolue, critHeal, bleedMods, essenceNoire, hordeHeal, instakill), updatePlayer (predateurSpdBonus), turret loop (tourelleSpdMult), ricochet (ricDmgMult), war cry (warCryExtended + knockback), clone (cloneDmgBonus), wolf max (wolfMaxBonus), wolf attack (wolfCopyWave), damagePlayer (extraRevenantCharges), killEnemy (sigBossRevive), explosion AoE (chainExplosion)
 
 **Fichiers touchés** : `index.html`
+
+---
+
+## Session 2026-05-04 (fin)
+
+**User** : "tu as upload sur github ?" → Confirmé. Commits `ecd84c9` et `7344ed9` poussés sur `main`.
+
+**User** : "sauvegarde notre conversation" → conversation.md mis à jour et committé.
