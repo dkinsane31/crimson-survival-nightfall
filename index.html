@@ -1964,7 +1964,7 @@ function spawnEnemyAt(kind, x, y, opts={}){
     ai: d.ai,
     elite: !!opts.elite,
     boss: false,
-    age:0, hit:0, stagger:0, shootCd:rand(0.5,1.4),
+    age:0, hit:0, stagger:0, contactCd:0, shootCd:rand(0.5,1.4),
     dashCd: rand(1.5,3.5), dashing:0,
     explodeCd: rand(2,4),
     dead:false
@@ -2127,7 +2127,7 @@ function spawnMiniBoss(){
     xp: 25 + State.miniBossCount * 15,
     col: def.col, glow: def.glow,
     ai: def.ai,
-    age:0, hit:0, stagger:0,
+    age:0, hit:0, stagger:0, contactCd:0,
     shootCd:2.0, dashCd:2.5, dashing:0, phaseCd:4.0, spawnCd:3.5
   };
   State.enemies.push(b);
@@ -2155,7 +2155,7 @@ function spawnFinalBoss(){
     xp: def.xp * 2,
     col: def.col, glow: def.glow,
     ai: def.ai,
-    age:0, hit:0, stagger:0,
+    age:0, hit:0, stagger:0, contactCd:0,
     shootCd:2.0, dashCd:3.5, dashing:0, phaseCd:4.0, spawnCd:3.5
   };
   State.enemies.push(b);
@@ -6131,10 +6131,12 @@ function updateEnemies(dt){
     e.vx *= 0.92;
     e.vy *= 0.92;
 
-    // Contact damage
+    // Contact damage — coup par coup (cooldown par ennemi)
+    if(e.contactCd > 0) e.contactCd -= dt;
     const pd = len(p.x-e.x, p.y-e.y);
-    if(pd < p.r + e.r){
-      damagePlayer(e.dmg*dt*2.2);
+    if(pd < p.r + e.r && e.contactCd <= 0){
+      damagePlayer(e.dmg * (e.boss ? 1.8 : 1.2));
+      e.contactCd = e.boss ? 1.2 : 0.75;
       const ang = Math.atan2(e.y-p.y, e.x-p.x);
       e.vx += Math.cos(ang)*40; e.vy += Math.sin(ang)*40;
     }
