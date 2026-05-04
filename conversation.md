@@ -933,3 +933,19 @@ Exemples affichés : `-30% PV max`, `Ennemis +60% vitesse`, `Chaque kill coûte 
 - `drawOneRelic()` : suppression du `fillText(name)` — seule l'icône (triangle/losange) est dessinée
 
 **Fichiers touchés** : `index.html` (`spawnFloat`, `drawOneRelic`)
+
+---
+
+## Session 2026-05-04 (suite) — Cap ennemis + fin de run boss final (commit 06510c0)
+
+**User** : "limite les monstres aussi vers la fin, également j'ai tué le boss à 10minutes mais la partie continuait quand même"
+
+### Cap d'ennemis à 200
+- `doSpawn()` : ajout de `if(State.enemies.length >= 200) break;` dans la boucle burst
+- Les ennemis vivants sont plafonnés à 200 max, quel que soit le taux de spawn ou les malédictions
+
+### Fin de run après boss final
+- **Cause** : dans `openSermentChoice()`, après avoir choisi un serment, le code faisait `State.phase='playing'; State.running=true;` — le jeu reprenait
+- **Fix** : suppression du resume, ajout de `setTimeout(gameOver, 2200)` — après 2.2s (le temps de voir le banner "SERMENT SCELLÉ"), la partie se termine normalement avec l'écran de stats
+
+**Fichiers touchés** : `index.html` (`doSpawn`, `openSermentChoice`)
