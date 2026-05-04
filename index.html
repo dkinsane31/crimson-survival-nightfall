@@ -1173,7 +1173,7 @@ const SHOP_ITEMS = [
   { id:'cristal_ame',    name:"Cristal d'Âme",         desc:'+1 niveau immédiat',                    cost:100, cat:'pouvoir', icn:'✨' },
   { id:'bombe_ames',     name:"Bombe à Âmes",          desc:'500 dégâts à tous les ennemis',         cost:90,  cat:'special', icn:'💥' },
   { id:'pacte_marchand', name:'Pacte du Marchand',     desc:'+30% or gagné ce run',                  cost:55,  cat:'special', icn:'🪙' },
-  { id:'oeil_predateur', name:'Œil du Prédateur',      desc:'Révèle toutes les reliques de la map',  cost:40,  cat:'special', icn:'👁' },
+  { id:'oeil_predateur', name:'Œil du Prédateur',      desc:'+35% rayon de collecte ce run',         cost:40,  cat:'special', icn:'👁' },
   { id:'coeur_boss',     name:'Cœur de Boss',          desc:'+1 charge de dash ce run',              cost:130, cat:'rare',    icn:'💎' },
   { id:'relique_garante',name:'Relique Garantie',      desc:'Offre une relique sol immédiatement',   cost:110, cat:'rare',    icn:'🔮' },
   { id:'resurrection',   name:'Résurrection',          desc:'Reviens à 30% PV à la prochaine mort',  cost:150, cat:'rare',    icn:'☠' },
@@ -2544,6 +2544,7 @@ function recomputePassives(){
   if(sb.dmgMult)      pas.dmgMult *= sb.dmgMult;
   if(sb.atkSpeedMult) pas.atkSpeedMult *= sb.atkSpeedMult;
   if(sb.extraDash)    pas.dashCharges = (pas.dashCharges||1) + sb.extraDash;
+  if(sb.pickupMult)   pas.pickupMult *= sb.pickupMult;
   // Perma-buffs (Sanctum, achetés avec les éclats d'ombre)
   applyPermaBuffs(pas);
   // Signatures exclusives du perso actuel
@@ -2859,8 +2860,8 @@ function updateRelics(dt){
       }
     }
   }
-  // Reliques pré-placées sur la map (visibles seulement si Œil du Prédateur actif)
-  if(State.mapRelics && State.shopBuffs?.relicsRevealed){
+  // Reliques pré-placées sur la map — toujours ramassables
+  if(State.mapRelics){
     for(let i=State.mapRelics.length-1;i>=0;i--){
       const r = State.mapRelics[i];
       r.age += dt;
@@ -2913,7 +2914,7 @@ function drawOneRelic(r, isMap){
 
 function drawRelics(){
   if(State.relics) for(const r of State.relics) drawOneRelic(r, false);
-  if(State.mapRelics && State.shopBuffs?.relicsRevealed){
+  if(State.mapRelics){
     for(const r of State.mapRelics) drawOneRelic(r, true);
   }
 }
@@ -6320,6 +6321,19 @@ function drawPlayerIso(p){
   ctx.fillStyle = ag;
   ctx.beginPath(); ctx.ellipse(s.x, s.y, auraR, auraR*0.5, 0, 0, TAU); ctx.fill();
   ctx.restore();
+  // Aura BOUCLIER SPECTRAL — anneau bleu pulsant quand actif
+  if(State.relicBuff?.id === 'aegis'){
+    const pulse = 0.7 + 0.3*Math.abs(Math.sin(State.time*6));
+    ctx.save();
+    ctx.strokeStyle = `rgba(96,192,255,${pulse})`;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#60c0ff';
+    ctx.shadowBlur = 18*pulse;
+    ctx.beginPath();
+    ctx.ellipse(s.x, s.y-18, 28, 34, 0, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
   // Sprite debout : PNG si dispo, sinon dessin canvas procédural
   // + animations procédurales (bob de marche, tilt, squash, idle breath)
   ctx.save();
@@ -7723,8 +7737,9 @@ function buyShopItem(id){
       State.goldMult = (State.goldMult||1) * 1.30;
       break;
     case 'oeil_predateur':
-      State.shopBuffs.relicsRevealed = true;
-      showBanner('ŒIL OUVERT', 'les reliques se révèlent', 1.8, 'evo');
+      State.shopBuffs.pickupMult = (State.shopBuffs.pickupMult||1) * 1.35;
+      recomputePassives();
+      showBanner('ŒIL DU PRÉDATEUR', '+35% rayon de collecte', 1.8, 'evo');
       break;
     case 'coeur_boss':
       State.shopBuffs.extraDash = (State.shopBuffs.extraDash||0) + 1;
