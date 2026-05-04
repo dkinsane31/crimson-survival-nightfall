@@ -113,6 +113,9 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
 .up .ds{color:var(--ink2);font-size:12px;line-height:1.45}
 .up .lvtag{display:inline-block;margin-top:6px;font-size:10px;letter-spacing:.2em;color:var(--cold);text-transform:uppercase}
 .up.evo .lvtag{color:#ffb37a}
+.up.ultime{border-color:#d9b26a;box-shadow:0 0 28px rgba(217,178,106,.3),0 0 0 1px rgba(217,178,106,.5) inset}
+.up.ultime:hover{box-shadow:0 0 36px rgba(217,178,106,.5),0 0 0 1px rgba(217,178,106,.8) inset}
+.up.ultime .lvtag{color:#d9b26a;letter-spacing:.25em}
 
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;max-width:380px;margin:18px auto 22px;font-size:13px}
 .stats-grid .k{color:var(--ink2);text-align:left;letter-spacing:.1em;text-transform:uppercase;font-size:11px}
@@ -400,6 +403,16 @@ canvas{display:block;background:#05060a;image-rendering:crisp-edges;touch-action
       <div class="lu-title">SANG ENCORE CHAUD</div>
       <div style="color:var(--ink2);font-size:13px;margin-bottom:18px">Choisis une marque. Elle restera.</div>
       <div class="upgrades" id="pactList"></div>
+    </div>
+  </div>
+
+  <!-- Serments de Sang (après boss final — permanent) -->
+  <div class="overlay" id="sermentScreen" style="display:none">
+    <div class="card">
+      <div class="lu-sub" style="color:var(--gold)">// Serment de Sang //</div>
+      <div class="lu-title" style="font-size:28px">POUVOIR ÉTERNEL</div>
+      <div style="color:var(--ink2);font-size:13px;margin-bottom:18px">Ce pouvoir te suivra à jamais. Choisis bien.</div>
+      <div class="upgrades" id="sermentList"></div>
     </div>
   </div>
 
@@ -937,6 +950,45 @@ const PACTS = {
     apply:(p)=>{ p.blGainMult = (p.blGainMult||1)*1.4; p.blDurationBonus = (p.blDurationBonus||0)+2; } },
   fureurRq: { name:'Fureur des Rênes',    icn:'🜡', desc:'Ennemis donnent +40% XP. Plus de palier gratuit.',
     apply:(p)=>{ p.xpMult = (p.xpMult||1)*1.4; p.noFreeTier = true; } }
+};
+
+/* ---- SERMENTS DE SANG — améliorations permanentes par personnage ----
+   Gagnés après chaque boss final. Sauvegardés dans SAVE.data.serments[char].
+   L'ultime n'apparaît qu'après 3 serments obtenus sur ce personnage.
+--------------------------------------------------------------------- */
+const SERMENTS = {
+  deathborne:[
+    { id:'serm_dth_canon',    name:'Serment du Canon',       icn:'🔫', desc:'+1 projectile sur tous les tirs.',                          max:3, ultime:false, apply:(p,n)=>{ p.projBonus += n; } },
+    { id:'serm_dth_tireur',   name:'Serment du Tireur',      icn:'🎯', desc:'+6% chance de critique.',                                    max:3, ultime:false, apply:(p,n)=>{ p.critChance += 0.06*n; } },
+    { id:'serm_dth_echo',     name:"Serment de l'Écho",      icn:'⤻',  desc:'Balles ricochées : +30% dégâts.',                           max:2, ultime:false, apply:(p,n)=>{ p.ricDmgMult=(p.ricDmgMult||1)*Math.pow(1.30,n); } },
+    { id:'serm_dth_tourelle', name:'Serment de la Tourelle', icn:'🜴',  desc:'Tourelle spectrale : +25% cadence de tir.',                 max:2, ultime:false, apply:(p,n)=>{ p.tourelleSpdMult=(p.tourelleSpdMult||1)*Math.pow(1.25,n); } },
+    { id:'serm_dth_explosif', name:'Serment Explosif',       icn:'💥', desc:'15% de chance de chaîner une 2ème explosion.',               max:1, ultime:false, apply:(p,n)=>{ p.chainExplosion=true; } },
+    { id:'serm_dth_ultime',   name:'MORT CERTAINE',          icn:'☠',  desc:'4% de chance : mort instantanée si la cible est sous 30% PV.',max:1,ultime:true,apply:(p,n)=>{ p.sigInstakill=true; } },
+  ],
+  selene:[
+    { id:'serm_sel_sang',     name:'Serment du Sang Vif',    icn:'🩸', desc:'Chaque critique soigne 3 PV.',                               max:3, ultime:false, apply:(p,n)=>{ p.critHeal=(p.critHeal||0)+3*n; } },
+    { id:'serm_sel_ombre',    name:"Serment de l'Ombre",     icn:'➤',  desc:'+1 charge de dash.',                                         max:2, ultime:false, apply:(p,n)=>{ p.dashCharges=(p.dashCharges||1)+n; } },
+    { id:'serm_sel_carmin',   name:'Serment Carmin',         icn:'💉', desc:'Saignement : +1s durée et +20% dégâts par tick.',             max:2, ultime:false, apply:(p,n)=>{ p.bleedDurBonus=(p.bleedDurBonus||0)+n; p.bleedDmgMult=(p.bleedDmgMult||1)*Math.pow(1.20,n); } },
+    { id:'serm_sel_fantome',  name:'Serment du Fantôme',     icn:'👁',  desc:"+8% chance d'esquive passive.",                             max:2, ultime:false, apply:(p,n)=>{ p.dodgeChance=(p.dodgeChance||0)+0.08*n; } },
+    { id:'serm_sel_miroir',   name:'Serment du Miroir',      icn:'👤', desc:'Le clone inflige +15% dégâts de plus.',                      max:3, ultime:false, apply:(p,n)=>{ p.cloneDmgBonus=(p.cloneDmgBonus||0)+0.15*n; } },
+    { id:'serm_sel_ultime',   name:'LAME ABSOLUE',           icn:'⚡', desc:'Toutes les 5 attaques consécutives : critique automatique ×3.',max:1,ultime:true,apply:(p,n)=>{ p.sigLameAbsolue=true; } },
+  ],
+  hybride:[
+    { id:'serm_hyb_bete',     name:'Serment de la Bête',     icn:'❤',  desc:'+25 PV max.',                                                max:4, ultime:false, apply:(p,n)=>{ p.maxHp+=25*n; } },
+    { id:'serm_hyb_horde',    name:'Serment de la Horde',    icn:'🐺', desc:'+1 loup guerrier permanent.',                                max:3, ultime:false, apply:(p,n)=>{ p.wolfMaxBonus=(p.wolfMaxBonus||0)+n; } },
+    { id:'serm_hyb_pierre',   name:'Serment de Pierre',      icn:'🛡',  desc:'Dégâts reçus réduits de 5%.',                               max:3, ultime:false, apply:(p,n)=>{ for(let i=0;i<n;i++) p.armor*=0.95; } },
+    { id:'serm_hyb_predateur',name:'Serment du Prédateur',   icn:'🜚',  desc:'Sous 40% PV : +6% vitesse.',                                max:2, ultime:false, apply:(p,n)=>{ p.predateurSpdBonus=(p.predateurSpdBonus||0)+0.06*n; } },
+    { id:'serm_hyb_tonnant',  name:'Serment Tonnant',        icn:'📣', desc:'Cri de Guerre repousse les ennemis et étourdit +1s.',         max:1, ultime:false, apply:(p,n)=>{ p.warCryExtended=true; } },
+    { id:'serm_hyb_ultime',   name:'ALPHA DOMINANT',         icn:'🐺', desc:'Les loups répliquent chaque onde (50% puissance).',           max:1, ultime:true,  apply:(p,n)=>{ p.wolfCopyWave=true; } },
+  ],
+  necro:[
+    { id:'serm_nec_horde',    name:'Serment de la Horde Noire',  icn:'💀', desc:'+2 alliés max dans toute la horde.',                    max:3, ultime:false, apply:(p,n)=>{ p.ghoulBonus=(p.ghoulBonus||0)+2*n; } },
+    { id:'serm_nec_affamee',  name:"Serment de l'Ombre Affamée", icn:'🜔',  desc:'Goules et revenants : +15% dégâts.',                    max:3, ultime:false, apply:(p,n)=>{ p.ghoulDmgMult=(p.ghoulDmgMult||1)*Math.pow(1.15,n); } },
+    { id:'serm_nec_rite',     name:'Serment du Rite Sombre',     icn:'🦇', desc:"Chaque boss final ressuscite en revenant d'élite.",       max:1, ultime:false, apply:(p,n)=>{ p.sigBossRevive=true; } },
+    { id:'serm_nec_essence',  name:"Serment de l'Essence Noire", icn:'◉',  desc:'+0.4% dégâts par kill de ta horde (max +30%).',          max:2, ultime:false, apply:(p,n)=>{ p.essenceNoireMax=(p.essenceNoireMax||0)+0.30; p.essenceNoireRate=(p.essenceNoireRate||0)+0.004; } },
+    { id:'serm_nec_revenant', name:'Serment du Revenant',        icn:'∞',  desc:'+1 résurrection par run.',                               max:2, ultime:false, apply:(p,n)=>{ p.extraRevenantCharges=(p.extraRevenantCharges||0)+n; } },
+    { id:'serm_nec_ultime',   name:'LE MAÎTRE ABSOLU',           icn:'🗿',  desc:'+4 alliés max. Chaque kill de ta horde soigne 2 PV.',   max:1, ultime:true,  apply:(p,n)=>{ p.ghoulBonus=(p.ghoulBonus||0)+4; p.hordeHeal=2; } },
+  ],
 };
 
 /* ---- BUFFS PERMANENTS (SANCTUM) ----
@@ -1936,7 +1988,7 @@ function spawnProj(p){
     const q = Object.assign({}, p, {
       x: State.player.x + Math.cos(pa + 1.571) * 75,
       y: State.player.y + Math.sin(pa + 1.571) * 75,
-      dmg: p.dmg * 0.65,
+      dmg: p.dmg * (0.65 + (State.pas.cloneDmgBonus||0)),
       hits: new Set(), age: 0, fromClone: true,
       color: '#a8d8ff', trail: '#4a88c8'
     });
@@ -2288,6 +2340,12 @@ function recomputePassives(){
     const sd = SIGNATURES[sid]; if(!sd || !sd.apply) continue;
     sd.apply(pas);
   }
+  // Serments de Sang (améliorations permanentes liées au personnage)
+  const _charSerments = (SAVE.data.serments || {})[State.char] || {};
+  for(const [sid, count] of Object.entries(_charSerments)){
+    const sdef = (SERMENTS[State.char]||[]).find(s=>s.id===sid);
+    if(sdef && count > 0) sdef.apply(pas, count);
+  }
   // Jalons de niveau débloqués
   const _msKey = State.char;
   if(MILESTONES[_msKey]){
@@ -2325,6 +2383,15 @@ function damagePlayer(amount){
       flash('#d9b26a', 0.7); addShake(12); slowmo(0.5);
       return;
     }
+    // Serment du Revenant — charges supplémentaires de résurrection
+    if(State.pas.extraRevenantCharges > 0 && (State.extraRevenantChargesLeft||0) > 0){
+      State.extraRevenantChargesLeft--;
+      State.player.hp = State.player.maxHp * 0.40;
+      State.iframes = 2.2;
+      showBanner('SERMENT DU REVENANT', "l'ombre refuse ta mort", 2.0, 'evo');
+      flash('#d9b26a', 0.6); addShake(14); slowmo(0.6);
+      return;
+    }
     // SIG necro — Revenant : resurrection unique à 40% PV
     if(State.pas.sigRevenant && !State.revenantUsed){
       State.revenantUsed = true;
@@ -2343,31 +2410,59 @@ function damagePlayer(amount){
 
 function damageEnemy(e, amount, fx, fy, src='proj'){
   if(e.dead) return;
+  // Serment Lame Absolue (Selene) — toutes les 5 frappes directes : critique ×3
+  let isLameAbsolue = false;
+  if(State.pas.sigLameAbsolue && typeof src === 'object' && !src.fromClone){
+    State.lameAbsolueCount = ((State.lameAbsolueCount||0) + 1);
+    if(State.lameAbsolueCount >= 5){ State.lameAbsolueCount = 0; isLameAbsolue = true; }
+  }
   // Crit roll
-  const isCrit = Math.random() < State.pas.critChance;
-  const crMult = State.pas.critMult + (src.critBonus||0);
+  const isCrit = isLameAbsolue || (Math.random() < State.pas.critChance);
+  const crMult = isLameAbsolue ? 3.0 : (State.pas.critMult + (src.critBonus||0));
   let dmg = amount * (isCrit ? crMult : 1);
+  if(isLameAbsolue) spawnFloat(e.x, e.y-24, '⚡ LAME', '#ffff40');
   if(State.blMode>0) dmg *= 1.6;
   if(State.activeEvent?.id==='pact') dmg *= 1.6;
   if(State.relicBuff?.id==='fury') dmg *= 1.6;
+  // Serment Essence Noire (Necro) — bonus dmg cumulé par kills de horde ce run
+  if(State.essenceNoireBonus > 0) dmg *= (1 + State.essenceNoireBonus);
   // SIG hybride — Sang Bestial : +35% sous 40% PV
-  if(State.pas.sigBeast && State.player.hp < State.player.maxHp*0.4){
-    dmg *= 1.35;
-  }
+  if(State.pas.sigBeast && State.player.hp < State.player.maxHp*0.4) dmg *= 1.35;
   // Jalon Hybride lvl 50 — Mutation Sauvage : ×1.5 sous 50% PV
   if(State.pas.milMutation && State.player.hp < State.player.maxHp*0.5) dmg *= 1.5;
-  // SIG selene — Saignement Carmin : DoT appliqué sur crit
+  // Serment du Sang Vif (Selene) — soin sur critique
+  if(isCrit && State.pas.critHeal > 0){
+    State.player.hp = Math.min(State.player.maxHp, State.player.hp + State.pas.critHeal);
+  }
+  // SIG selene — Saignement Carmin : DoT sur crit (avec bonus serments Carmin)
   if(isCrit && State.pas.sigBleed){
-    e.bleed = { time:3, dps: amount * 0.35 };
+    const bleedDur = 3 + (State.pas.bleedDurBonus||0);
+    const bleedDps = amount * 0.35 * (State.pas.bleedDmgMult||1);
+    e.bleed = { time:bleedDur, dps:bleedDps };
   }
   // Jalon Selene lvl 50 — Zone Critique : onde AoE sur crit
   if(isCrit && State.pas.milCritZone){
     State.waves.push({ x:e.x, y:e.y, r:8, maxR:80*State.pas.areaMult,
       life:0.26, maxLife:0.26, dmg:amount*0.30*State.pas.dmgMult, color:'#ff60a0' });
   }
+  // Essence Noire + Maître Absolu — effets sur kill de familier (avant hp-=dmg)
+  const isHordeSrc = (src==='goule'||src==='revenant'||src==='loup'||src==='corbeau'||src==='golem'||src==='chauvesouris');
+  if(isHordeSrc && !e.dead && e.hp - dmg <= 0){
+    if(State.pas.essenceNoireRate > 0){
+      State.essenceNoireBonus = Math.min(State.pas.essenceNoireMax||0, (State.essenceNoireBonus||0) + State.pas.essenceNoireRate);
+    }
+    if(State.pas.hordeHeal > 0){
+      State.player.hp = Math.min(State.player.maxHp, State.player.hp + State.pas.hordeHeal);
+    }
+  }
   e.hp -= dmg;
   e.hit = 0.12;
   State.damage += dmg;
+  // Serment Mort Certaine (Deathborne) — 4% instakill si ennemi < 30% PV max
+  if(State.pas.sigInstakill && !e.boss && e.hp > 0 && e.hp < e.maxHp*0.30 && Math.random()<0.04){
+    e.hp = 0;
+    spawnFloat(e.x, e.y-22, '☠ MORT CERTAINE', '#ff2020');
+  }
   // small knockback
   if(!e.boss){
     const a = Math.atan2(e.y-fy, e.x-fx);
@@ -2387,9 +2482,7 @@ function damageEnemy(e, amount, fx, fy, src='proj'){
   if(src==='tempete'){
     State.player.hp = Math.min(State.player.maxHp, State.player.hp + dmg*0.03);
   }
-  if(e.hp<=0){
-    killEnemy(e);
-  }
+  if(e.hp<=0) killEnemy(e);
 }
 
 function killEnemy(e){
@@ -2472,9 +2565,24 @@ function killEnemy(e){
         SAVE.save();
       }
     }
-    // Mini-boss → boutique ; boss final → pacte sacrificiel
+    // Serment du Rite Sombre — boss final ressuscite en revenant d'élite
+    if(isFinal && State.pas.sigBossRevive){
+      const bx = e.x, by = e.y, bDef = e.bossDef;
+      setTimeout(()=>{
+        State.familiars.push({
+          x:bx+rand(-60,60), y:by+rand(-60,60), vx:0, vy:0, r:18,
+          hp:e.maxHp*0.35, maxHp:e.maxHp*0.35,
+          dmg:(bDef.dmg||18)*0.55*(State.pas.dmgMult||1),
+          spd:200, hitCd:0, angle:0, age:0, dead:false,
+          col:'#0a0a28', glow:'#ff4444', kind:'revenant'
+        });
+        showBanner('RITE SOMBRE', bDef.name.toLowerCase()+' ressuscite à tes côtés', 1.8, 'evo');
+        flash('#9b6bff', 0.4);
+      }, 1400);
+    }
+    // Mini-boss → boutique ; boss final → serment éternel
     if(isMini) setTimeout(openShop, 700);
-    else        setTimeout(openPactChoice, 700);
+    else        setTimeout(openSermentChoice, 700);
   } else if(e.elite){
     addShake(4); flash('#ffb3ff', 0.18);
     // Or sur élite : 5-8
@@ -2608,6 +2716,51 @@ function openPactChoice(){
     list.appendChild(d);
   });
   document.getElementById('pactScreen').style.display='flex';
+  AUD.boss();
+}
+
+function openSermentChoice(){
+  const char = State.char;
+  const list = SERMENTS[char]; if(!list || list.length===0) return;
+  if(!SAVE.data.serments) SAVE.data.serments = {};
+  if(!SAVE.data.serments[char]) SAVE.data.serments[char] = {};
+  const owned = SAVE.data.serments[char];
+  const totalOwned = Object.values(owned).reduce((a,b)=>a+b, 0);
+  const pool = list.filter(s => {
+    if((owned[s.id]||0) >= s.max) return false;
+    if(s.ultime && totalOwned < 3) return false;
+    return true;
+  });
+  if(pool.length === 0) return;
+  for(let i=pool.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]] = [pool[j],pool[i]];
+  }
+  const offers = pool.slice(0,3);
+  State.phase = 'serment'; State.running = false;
+  const el = document.getElementById('sermentList');
+  el.innerHTML = '';
+  offers.forEach(s => {
+    const cur = owned[s.id]||0;
+    const d = document.createElement('div');
+    d.className = 'up evo' + (s.ultime ? ' ultime' : '');
+    d.innerHTML = `
+      <span class="icn">${s.icn}</span>
+      <div class="nm">${s.name}</div>
+      <div class="ds">${s.desc}</div>
+      <div class="lvtag">${s.ultime ? '✦ ULTIME' : 'SERMENT'} ${s.max>1 ? '('+cur+'/'+s.max+')' : ''}</div>`;
+    d.onclick = ()=>{
+      owned[s.id] = (owned[s.id]||0) + 1;
+      SAVE.save();
+      recomputePassives();
+      document.getElementById('sermentScreen').style.display = 'none';
+      State.phase = 'playing'; State.running = true;
+      showBanner('SERMENT SCELLÉ', s.name, 2.2, 'evo');
+      AUD.evo(); flash('#d9b26a', 0.65); addShake(12);
+    };
+    el.appendChild(d);
+  });
+  document.getElementById('sermentScreen').style.display = 'flex';
   AUD.boss();
 }
 
@@ -3185,6 +3338,10 @@ function updatePlayer(dt){
   let speed = State.pas.baseSpeed * State.pas.speedMult;
   if(State.blMode>0) speed *= 1.18;
   if(State.relicBuff?.id==='haste') speed *= 1.35;
+  // Serment du Prédateur (Hybride) — vitesse bonus sous 40% PV
+  if(State.pas.predateurSpdBonus > 0 && State.player.hp < State.player.maxHp * 0.40){
+    speed *= (1 + State.pas.predateurSpdBonus);
+  }
 
   // dash overrides movement while active
   if(State.dashTime>0){
@@ -6364,6 +6521,11 @@ function updateProjectiles(dt){
           State.waves.push({ x:p.x, y:p.y, r:6, maxR:60*State.pas.areaMult,
             life:0.22, maxLife:0.22, dmg:p.dmg*0.30*State.pas.dmgMult, color:'#ffd070' });
           for(let _i=0;_i<3;_i++) spawnPart(p.x, p.y, '#ffb030', 0.3, rand(-70,70), rand(-70,70));
+          // Serment Explosif — 15% de chance de chaîner une 2ème explosion
+          if(State.pas.chainExplosion && Math.random() < 0.15){
+            State.waves.push({ x:p.x, y:p.y, r:6, maxR:90*State.pas.areaMult,
+              life:0.28, maxLife:0.28, dmg:p.dmg*0.22*State.pas.dmgMult, color:'#ff8020' });
+          }
         }
         // COMBO · Fusillade Sanglante : 3 gouttes de sang à l'impact
         if(p.kind==='pistol' && State.combos.fusillade && !p.fusilladeSpent){
@@ -6392,6 +6554,7 @@ function updateProjectiles(dt){
               const ra = Math.atan2(next.y-p.y, next.x-p.x);
               const sp = Math.hypot(p.vx,p.vy);
               p.vx = Math.cos(ra)*sp; p.vy = Math.sin(ra)*sp;
+              if(State.pas.ricDmgMult) p.dmg *= State.pas.ricDmgMult;
               p.life = p.age + 0.8;
               break;
             }
@@ -6810,6 +6973,10 @@ function updateFamiliars(dt){
         damageEnemy(target, f.dmg * 1.6, f.x, f.y, 'loup');
         f.hitCd = 0.30;
         for(let _i=0;_i<3;_i++) spawnPart(f.x, f.y, '#ff8030', 0.5, rand(-80,80), rand(-80,80));
+        if(State.pas.wolfCopyWave){
+          State.waves.push({ x:f.x, y:f.y, r:4, maxR:70*State.pas.areaMult,
+            life:0.28, maxLife:0.28, dmg:f.dmg*0.8*(State.pas.dmgMult||1), color:'#ff8030' });
+        }
       }
     } else if(f.kind==='loup'){
       // Loup guerrier : charge rapide, mêlée agressive
@@ -6820,6 +6987,10 @@ function updateFamiliars(dt){
         damageEnemy(target, f.dmg, f.x, f.y, 'loup');
         f.hitCd = 0.35;
         spawnPart(f.x, f.y, '#ff7020', 0.5);
+        if(State.pas.wolfCopyWave){
+          State.waves.push({ x:f.x, y:f.y, r:4, maxR:70*State.pas.areaMult,
+            life:0.28, maxLife:0.28, dmg:f.dmg*0.8*(State.pas.dmgMult||1), color:'#ff8030' });
+        }
       }
     } else {
       // goule / revenant (par défaut) : mêlée équilibrée
@@ -6842,7 +7013,8 @@ function updateFamiliars(dt){
   if(State.pas && State.pas.wolfPack){
     State.wolfSpawnCd = (State.wolfSpawnCd||0) - dt;
     const wolves = State.familiars.filter(f=>!f.dead && f.kind==='loup').length;
-    if(wolves < 5 && State.wolfSpawnCd <= 0){
+    const wolfMax = 5 + (State.pas.wolfMaxBonus||0);
+    if(wolves < wolfMax && State.wolfSpawnCd <= 0){
       const pw = State.player;
       const wa = rand(0, TAU);
       const isAlpha = !!(State.pas.milAlphaWolves);
@@ -7003,7 +7175,7 @@ function loop(ts){
       tr.angle += 1.8 * dt;
       tr.cd -= dt;
       if(tr.cd <= 0){
-        tr.cd = 0.9;
+        tr.cd = 0.9 / (State.pas.tourelleSpdMult||1);
         const tx = State.player.x + Math.cos(tr.angle) * tr.orbitRadius;
         const ty = State.player.y + Math.sin(tr.angle) * tr.orbitRadius;
         const ta = nearestEnemy({x:tx, y:ty}, 580);
@@ -7022,8 +7194,13 @@ function loop(ts){
       if(State.warCryCd <= 0){
         State.warCryCd = 8;
         for(const e of State.enemies){
-          if(!e.dead && len(e.x-State.player.x, e.y-State.player.y) < 300)
-            e.stagger = Math.max(e.stagger||0, 1.8);
+          if(!e.dead && len(e.x-State.player.x, e.y-State.player.y) < 300){
+            e.stagger = Math.max(e.stagger||0, State.pas.warCryExtended ? 2.8 : 1.8);
+            if(State.pas.warCryExtended){
+              const wa = Math.atan2(e.y-State.player.y, e.x-State.player.x);
+              e.vx += Math.cos(wa)*220; e.vy += Math.sin(wa)*220;
+            }
+          }
         }
         State.waves.push({ x:State.player.x, y:State.player.y, r:10, maxR:300,
           life:0.45, maxLife:0.45, dmg:0, color:'#ffd060' });
@@ -7274,6 +7451,7 @@ function resetRun(){
   State.turret=null; State.clone=null; State.warCryCd=undefined; State.fauxTimer=0; State.wolfSpawnCd=0;
   State.relics=[]; State.relicBuff=null;
   State.gold=0; State.goldMult=1; State.shopBuffs={};
+  State.essenceNoireBonus=0; State.lameAbsolueCount=0; State.extraRevenantChargesLeft=0;
   State.activeEvent=null; State.nextEventTime=85+Math.random()*55; State.eventXpTimer=0;
   State.nightWavesDone=new Set();
   State.weapons = [{ id: CHARS[State.char].starter, level:1, cdLeft:0.2 }];
@@ -7290,6 +7468,7 @@ function resetRun(){
   State.player = makePlayer(State.char);
   State.cam.x = State.player.x; State.cam.y = State.player.y;
   recomputePassives();
+  State.extraRevenantChargesLeft = State.pas.extraRevenantCharges || 0;
   updateLoadoutUi();
   initEnv();
   initMapProps();
@@ -7304,6 +7483,7 @@ function startGame(){
   document.getElementById('levelUp').style.display='none';
   document.getElementById('milestoneScreen').style.display='none';
   document.getElementById('shopScreen').style.display='none';
+  document.getElementById('sermentScreen').style.display='none';
   document.getElementById('hud').style.display='block';
   document.getElementById('gameTopbar').style.display='flex';
   showMobileControls(isMobile());
